@@ -1,6 +1,8 @@
 'use server'
 
 import { stripe } from '@/lib/stripe'
+import { auth } from '@/lib/auth'
+import { headers } from 'next/headers'
 
 interface DomainCheckoutParams {
   domainName: string
@@ -9,6 +11,15 @@ interface DomainCheckoutParams {
 }
 
 export async function createDomainCheckoutSession({ domainName, priceInCents, type }: DomainCheckoutParams) {
+  const headersList = await headers()
+  const session = await auth.api.getSession({
+    headers: headersList,
+  })
+
+  if (!session || !session.user) {
+    throw new Error('User not authenticated')
+  }
+
   const description = type === 'buy' 
     ? `Full ownership of ${domainName}` 
     : `Monthly lease for ${domainName}`
@@ -25,6 +36,7 @@ export async function createDomainCheckoutSession({ domainName, priceInCents, ty
     metadata: {
       domainName,
       type,
+      userId: session.user.id,
     },
   })
 
