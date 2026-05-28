@@ -53,19 +53,17 @@ export const verification = pgTable('verification', {
   updatedAt: timestamp('updatedAt').defaultNow(),
 })
 
-// --- User Domains table for marketplace purchases -----------------------------------------------
-
 export const userDomain = pgTable('userDomain', {
   id: text('id').primaryKey(),
   userId: text('userId')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   domainName: text('domainName').notNull(),
-  type: text('type').notNull(), // 'buy' or 'lease'
+  type: text('type').notNull(),
   priceInCents: integer('priceInCents').notNull(),
   stripeSessionId: text('stripeSessionId').notNull().unique(),
   purchasedAt: timestamp('purchasedAt').notNull().defaultNow(),
-  expiresAt: timestamp('expiresAt'), // Only for leases
+  expiresAt: timestamp('expiresAt'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 })
