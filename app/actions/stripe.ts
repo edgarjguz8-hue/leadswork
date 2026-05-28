@@ -17,52 +17,19 @@ export async function createDomainCheckoutSession({ domainName, priceInCents, ty
   const processingFee = Math.round(priceInCents * 0.029 + 30)
   const totalInCents = priceInCents + processingFee
 
-  if (type === 'lease') {
-    // For subscriptions/leases
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: domainName,
-              description: description,
-            },
-            unit_amount: totalInCents,
-            recurring: {
-              interval: 'month',
-            },
-          },
-          quantity: 1,
-        },
-      ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/checkout/success?domain=${encodeURIComponent(domainName)}&type=lease`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/?canceled=true`,
-    })
+  // Create a PaymentIntent for custom payment form
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: totalInCents,
+    currency: 'usd',
+    description: description,
+    metadata: {
+      domainName,
+      type,
+    },
+  })
 
-    return { url: session.url }
-  } else {
-    // For one-time purchases
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: domainName,
-              description: description,
-            },
-            unit_amount: totalInCents,
-          },
-          quantity: 1,
-        },
-      ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/checkout/success?domain=${encodeURIComponent(domainName)}&type=buy`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/?canceled=true`,
-    })
-
-    return { url: session.url }
+  return { 
+    clientSecret: paymentIntent.client_secret,
+    url: `/checkout?domain=${encodeURIComponent(domainName)}&price=${priceInCents}&type=${type}&secret=${paymentIntent.client_secret}`
   }
 }

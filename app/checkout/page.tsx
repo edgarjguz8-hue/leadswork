@@ -17,12 +17,15 @@ function CheckoutContent() {
     priceInCents: number
     type: 'buy' | 'lease'
   } | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const domain = searchParams.get('domain')
     const price = searchParams.get('price')
     const type = searchParams.get('type') as 'buy' | 'lease'
     const secret = searchParams.get('secret')
+
+    console.log('[v0] Checkout page - URL params:', { domain, price, type, secret })
 
     if (domain && price && type && secret) {
       setOrderData({
@@ -31,14 +34,27 @@ function CheckoutContent() {
         type,
       })
       setClientSecret(secret)
+    } else {
+      setError('Missing payment information. Please try again.')
+      console.log('[v0] Missing params - domain:', domain, 'price:', price, 'type:', type, 'secret:', secret)
     }
   }, [searchParams])
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0a1220]">
+        <div className="text-center">
+          <p className="text-red-400">{error}</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!orderData || !clientSecret) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a1220]">
         <div className="text-center">
-          <p className="text-slate-400">Loading payment...</p>
+          <p className="text-slate-400">Loading payment form...</p>
         </div>
       </div>
     )
