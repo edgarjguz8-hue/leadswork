@@ -1,5 +1,3 @@
-'use server'
-
 import { randomBytes } from 'crypto'
 import { db } from '@/lib/db'
 import { domainVerification } from '@/lib/db/schema'
