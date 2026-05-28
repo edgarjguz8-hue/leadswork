@@ -53,13 +53,34 @@ export const verification = pgTable('verification', {
   updatedAt: timestamp('updatedAt').defaultNow(),
 })
 
+export const domain = pgTable('domain', {
+  id: text('id').primaryKey(),
+  normalizedName: text('normalizedName').notNull().unique(),
+  displayName: text('displayName').notNull(),
+  buyPrice: integer('buyPrice').notNull(),
+  leasePrice: integer('leasePrice').notNull(),
+  category: text('category').notNull(),
+  description: text('description').notNull(),
+  score: integer('score').notNull(),
+  status: text('status').notNull().default('available'), // available, pending, sold, leased
+  buyerId: text('buyerId').references(() => user.id, { onDelete: 'set null' }),
+  leaserId: text('leaserId').references(() => user.id, { onDelete: 'set null' }),
+  purchasedAt: timestamp('purchasedAt'),
+  leaseStartAt: timestamp('leaseStartAt'),
+  leaseExpiresAt: timestamp('leaseExpiresAt'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+})
+
 export const userDomain = pgTable('userDomain', {
   id: text('id').primaryKey(),
   userId: text('userId')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  domainName: text('domainName').notNull(),
-  type: text('type').notNull(),
+  domainId: text('domainId')
+    .notNull()
+    .references(() => domain.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // buy or lease
   priceInCents: integer('priceInCents').notNull(),
   stripeSessionId: text('stripeSessionId').notNull().unique(),
   purchasedAt: timestamp('purchasedAt').notNull().defaultNow(),

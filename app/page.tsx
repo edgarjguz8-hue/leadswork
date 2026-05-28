@@ -1,6 +1,6 @@
-"use client"
+  "use client"
 
-import React, { useMemo, useState } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "@/lib/auth-client"
 import DomainCheckout from "@/components/domain-checkout"
@@ -31,57 +31,19 @@ import {
   LayoutGrid,
 } from "lucide-react"
 import { motion } from "framer-motion"
+import { getAvailableDomainsForMarketplace } from "@/lib/marketplace-data"
 
-const domains = [
-  {
-    name: "BakeryShop.com",
-    price: "$18,000",
-    lease: "$499/mo",
-    category: "Local Business",
-    idea: "A premium name for a bakery, café, catering company, or dessert brand.",
-    score: 94,
-  },
-  {
-    name: "TampaLuxuryCars.com",
-    price: "$12,500",
-    lease: "$349/mo",
-    category: "Automotive",
-    idea: "Built for luxury rentals, dealer leads, exotic car content, or local automotive services.",
-    score: 91,
-  },
-  {
-    name: "AttorneyLeads.com",
-    price: "$25,000",
-    lease: "$799/mo",
-    category: "Legal",
-    idea: "A direct, high-intent domain for legal marketing, attorney referrals, or lead generation.",
-    score: 96,
-  },
-  {
-    name: "FitnessCrew.com",
-    price: "$8,500",
-    lease: "$249/mo",
-    category: "Health & Fitness",
-    idea: "A flexible brand for coaching, training, gym communities, or fitness content.",
-    score: 88,
-  },
-  {
-    name: "HomeRepairPro.com",
-    price: "$15,000",
-    lease: "$399/mo",
-    category: "Home Services",
-    idea: "Strong fit for contractors, repair leads, local service directories, or home improvement brands.",
-    score: 92,
-  },
-  {
-    name: "AIBizTools.com",
-    price: "$9,000",
-    lease: "$299/mo",
-    category: "Business Tools",
-    idea: "Useful for software, business automation, consulting, or an AI tools directory.",
-    score: 89,
-  },
-]
+interface Domain {
+  id: string
+  name: string
+  price: string
+  lease: string
+  category: string
+  idea: string
+  score: number
+  buyPriceInCents: number
+  leasePriceInCents: number
+}
 
 const categories = [
   "All",
@@ -160,15 +122,33 @@ function PageHero({
 function DomainMarketplace() {
   const router = useRouter()
   const { data: session } = useSession()
+  const [domains, setDomains] = useState<Domain[]>([])
+  const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState("")
   const [category, setCategory] = useState("All")
   const [mode, setMode] = useState<"buy" | "lease" | "sell" | null>(null)
   const [showMoreCategories, setShowMoreCategories] = useState(false)
   const [checkoutDomain, setCheckoutDomain] = useState<{
+    id: string
     name: string
     priceInCents: number
     type: 'buy' | 'lease'
   } | null>(null)
+
+  // Load domains from database on mount
+  useEffect(() => {
+    async function loadDomains() {
+      try {
+        const loadedDomains = await getAvailableDomainsForMarketplace()
+        setDomains(loadedDomains)
+      } catch (error) {
+        console.error('Failed to load domains:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadDomains()
+  }, [])
 
   // Helper to parse price string to cents
   const parsePriceToCents = (priceStr: string): number => {
@@ -186,15 +166,16 @@ function DomainMarketplace() {
   }
 
   // Handler for buy/lease checkout
-  const handleCheckout = (domain: typeof domains[0], type: 'buy' | 'lease') => {
+  const handleCheckout = (domain: Domain, type: 'buy' | 'lease') => {
     if (!session?.user) {
       router.push("/sign-in")
       return
     }
-    const priceStr = type === 'buy' ? domain.price : domain.lease
+    const priceInCents = type === 'buy' ? domain.buyPriceInCents : domain.leasePriceInCents
     setCheckoutDomain({
+      id: domain.id,
       name: domain.name,
-      priceInCents: parsePriceToCents(priceStr),
+      priceInCents,
       type
     })
   }
@@ -642,6 +623,7 @@ function DomainMarketplace() {
         {/* Checkout Modal */}
         {checkoutDomain && (
           <DomainCheckout
+            domainId={checkoutDomain.id}
             domainName={checkoutDomain.name}
             priceInCents={checkoutDomain.priceInCents}
             type={checkoutDomain.type}
@@ -788,6 +770,7 @@ function DomainMarketplace() {
         {/* Checkout Modal */}
         {checkoutDomain && (
           <DomainCheckout
+            domainId={checkoutDomain.id}
             domainName={checkoutDomain.name}
             priceInCents={checkoutDomain.priceInCents}
             type={checkoutDomain.type}
