@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession, signOut } from '@/lib/auth-client'
 import { getUserDomains } from '@/app/actions/domain'
-import { LogOut, User, Domain, Calendar, Badge, Loader2, ArrowLeft } from 'lucide-react'
+import { LogOut, User, Globe, Calendar, Badge, Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 interface UserDomain {
@@ -140,14 +140,14 @@ export default function DashboardPage() {
         <section>
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-400/10">
-              <Domain className="h-5 w-5 text-sky-400" />
+              <Globe className="h-5 w-5 text-sky-400" />
             </div>
             <h2 className="text-xl font-semibold text-white">My Domains</h2>
           </div>
 
           {domains.length === 0 ? (
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-12 text-center backdrop-blur">
-              <Domain className="mx-auto mb-4 h-12 w-12 text-slate-600" />
+              <Globe className="mx-auto mb-4 h-12 w-12 text-slate-600" />
               <p className="text-slate-400">You don't have any domains yet.</p>
               <Link
                 href="/"
