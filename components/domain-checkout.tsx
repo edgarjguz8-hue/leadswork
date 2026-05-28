@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { X, Shield, CreditCard, Check } from 'lucide-react'
-import { createDomainCheckoutSession } from '@/app/actions/stripe'
+import { createPaymentIntent } from '@/app/actions/stripe'
 
 interface DomainCheckoutProps {
   domainName: string
@@ -17,6 +18,7 @@ export default function DomainCheckout({
   type,
   onClose 
 }: DomainCheckoutProps) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -32,14 +34,24 @@ export default function DomainCheckout({
     setError(null)
     
     try {
-      const { url } = await createDomainCheckoutSession({ 
+      const result = await createPaymentIntent({ 
         domainName, 
         priceInCents, 
         type 
       })
       
-      if (url) {
-        window.location.href = url
+      if (result.success && result.clientSecret) {
+        // Redirect to checkout page with payment intent details
+        const params = new URLSearchParams({
+          domain: domainName,
+          price: priceInCents.toString(),
+          type: type,
+          secret: result.clientSecret,
+        })
+        router.push(`/checkout?${params.toString()}`)
+      } else {
+        setError(result.error || 'Failed to start checkout')
+        setLoading(false)
       }
     } catch (err) {
       console.error('Checkout error:', err)
@@ -168,7 +180,7 @@ export default function DomainCheckout({
             ) : (
               <>
                 <CreditCard className="h-4 w-4" />
-                <span>{type === 'buy' ? 'Proceed to Payment' : 'Start Lease'}</span>
+                <span>Proceed to Payment</span>
               </>
             )}
           </button>
