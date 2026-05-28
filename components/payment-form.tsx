@@ -46,13 +46,24 @@ export default function PaymentForm({ orderData }: PaymentFormProps) {
         confirmParams: {
           return_url: `${window.location.origin}/checkout/success?domain=${orderData.domainName}&type=${orderData.type}`,
         },
+        redirect: 'if_required'
       })
 
       if (confirmError) {
         setError(confirmError.message || 'Payment confirmation failed')
         setIsLoading(false)
-      } else if (paymentIntent?.status === 'succeeded') {
-        router.push(`/checkout/success?domain=${orderData.domainName}&type=${orderData.type}&session=${paymentIntent.id}`)
+      } else if (paymentIntent) {
+        console.log('[v0] Payment succeeded:', paymentIntent.status)
+        if (paymentIntent.status === 'succeeded') {
+          router.push(`/checkout/success?domain=${orderData.domainName}&type=${orderData.type}&session=${paymentIntent.id}`)
+        } else if (paymentIntent.status === 'requires_action') {
+          // 3D Secure or other authentication required
+          setError('Payment requires additional authentication')
+          setIsLoading(false)
+        } else if (paymentIntent.status === 'requires_payment_method') {
+          setError('Payment method was declined. Please try another card.')
+          setIsLoading(false)
+        }
       }
     } catch (err) {
       setError('An error occurred during payment')

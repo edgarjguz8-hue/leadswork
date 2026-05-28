@@ -39,12 +39,15 @@ function SuccessContent() {
 
         {/* Action */}
         <Link
-          href="/"
+          href="/dashboard"
           className="mt-8 inline-flex items-center gap-2 rounded-xl bg-sky-400 px-8 py-3.5 text-sm font-semibold text-[#0a1220] transition hover:bg-sky-300"
         >
-          Back to Home
+          View My Domains
           <ArrowRight className="h-4 w-4" />
         </Link>
+        <p className="mt-4 text-sm text-slate-500">
+          <Link href="/" className="hover:text-slate-400">Back to Home</Link>
+        </p>
       </div>
     </div>
   )

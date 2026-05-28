@@ -28,6 +28,7 @@ import {
   TrendingUp,
   LogOut,
   User,
+  LayoutGrid,
 } from "lucide-react"
 import { motion } from "framer-motion"
 
@@ -1592,6 +1593,13 @@ export default function LeadsWorkWebsite() {
                 {session.user.name || session.user.email}
               </span>
               <button
+                onClick={() => router.push("/dashboard")}
+                className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/5"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                Dashboard
+              </button>
+              <button
                 onClick={handleSignOut}
                 className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/5"
               >
@@ -1645,6 +1653,16 @@ export default function LeadsWorkWebsite() {
                     <p className="px-3 py-2 text-sm text-slate-400">
                       {session.user.name || session.user.email}
                     </p>
+                    <button
+                      onClick={() => {
+                        router.push("/dashboard")
+                        setMenuOpen(false)
+                      }}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left text-sm text-slate-400 transition hover:text-white"
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                      Dashboard
+                    </button>
                     <button
                       onClick={() => {
                         handleSignOut()
