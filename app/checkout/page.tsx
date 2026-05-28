@@ -5,10 +5,11 @@ import { useState, useEffect } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
 import PaymentForm from '@/components/payment-form'
+import { Suspense } from 'react'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const searchParams = useSearchParams()
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [orderData, setOrderData] = useState<{
@@ -66,5 +67,19 @@ export default function CheckoutPage() {
         </Elements>
       </div>
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-[#0a1220]">
+        <div className="text-center">
+          <p className="text-slate-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
   )
 }
