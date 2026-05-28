@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "@/lib/auth-client"
+import Link from "next/link"
 import DomainCheckout from "@/components/domain-checkout"
 import {
   Search,
@@ -1591,6 +1592,12 @@ export default function LeadsWorkWebsite() {
               <span className="text-sm text-slate-400">
                 {session.user.name || session.user.email}
               </span>
+              <Link
+                href="/dashboard"
+                className="rounded-lg border border-sky-400/30 px-4 py-2 text-sm font-medium text-sky-400 transition hover:bg-sky-400/10"
+              >
+                Dashboard
+              </Link>
               <button
                 onClick={handleSignOut}
                 className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/5"
