@@ -5,6 +5,13 @@ import { userDomain, domain as domainTable } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { normalizeDomainName } from '@/lib/domain-utils'
+import { getDomainAvailability } from '@/lib/domain-availability'
+import {
+  createVerificationRequest,
+  verifyDomainOwnership,
+  hasVerifiedOwnership,
+  getVerificationStatus,
+} from '@/lib/dns-verification'
 
 /**
  * Check if a domain is available for purchase/lease
@@ -209,6 +216,138 @@ export async function getUserDomains(userId: string) {
     return {
       success: false,
       error: 'Failed to fetch user domains',
+    }
+  }
+}
+
+/**
+ * Check external domain availability and requirements
+ */
+export async function checkExternalDomainStatus(domainName: string) {
+  try {
+    const normalized = normalizeDomainName(domainName)
+
+    // Check external availability
+    const availability = await getDomainAvailability(domainName)
+
+    if (!availability.success) {
+      return {
+        success: false,
+        error: availability.error || 'Failed to check domain availability',
+      }
+    }
+
+    return {
+      success: true,
+      isAvailable: availability.isAvailable,
+      externallyRegistered: availability.externallyRegistered,
+      cached: availability.cached,
+      message: availability.externallyRegistered
+        ? 'This domain is already registered and cannot be listed as available on LeadsWork.'
+        : 'Domain is available for listing',
+    }
+  } catch (error) {
+    console.error('[v0] Error checking external domain status:', error)
+    return {
+      success: false,
+      error: 'Failed to check domain status',
+    }
+  }
+}
+
+/**
+ * Request ownership verification for a domain
+ */
+export async function requestDomainVerification({
+  domainId,
+  userId,
+}: {
+  domainId: string
+  userId: string
+}) {
+  try {
+    const result = await createVerificationRequest({ domainId, userId })
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error,
+      }
+    }
+
+    return {
+      success: true,
+      verificationCode: result.verificationCode,
+      existingVerification: result.existingVerification,
+    }
+  } catch (error) {
+    console.error('[v0] Error requesting verification:', error)
+    return {
+      success: false,
+      error: 'Failed to request verification',
+    }
+  }
+}
+
+/**
+ * Verify domain ownership via DNS record
+ */
+export async function verifyDomainOwnershipAction({
+  domainId,
+  domainName,
+  userId,
+}: {
+  domainId: string
+  domainName: string
+  userId: string
+}) {
+  try {
+    const result = await verifyDomainOwnership({
+      domainId,
+      domainName,
+      userId,
+    })
+
+    return result
+  } catch (error) {
+    console.error('[v0] Error verifying domain ownership:', error)
+    return {
+      success: false,
+      verified: false,
+      error: 'Failed to verify domain ownership',
+    }
+  }
+}
+
+/**
+ * Get domain verification status for a user
+ */
+export async function getDomainVerificationStatus({
+  domainId,
+  userId,
+}: {
+  domainId: string
+  userId: string
+}) {
+  try {
+    const status = await getVerificationStatus({ domainId, userId })
+    const hasVerified = await hasVerifiedOwnership({ domainId, userId })
+
+    return {
+      success: true,
+      status: status.status,
+      verificationCode: status.verificationCode,
+      expiresAt: status.expiresAt,
+      verifiedAt: status.verifiedAt,
+      isVerified: hasVerified,
+    }
+  } catch (error) {
+    console.error('[v0] Error getting verification status:', error)
+    return {
+      success: false,
+      status: 'unverified',
+      isVerified: false,
+      error: 'Failed to get verification status',
     }
   }
 }

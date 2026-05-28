@@ -4,6 +4,8 @@ import React, { useMemo, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "@/lib/auth-client"
 import DomainCheckout from "@/components/domain-checkout"
+import OwnershipVerification from "@/components/ownership-verification"
+import SellDomainForm from "@/components/sell-domain-form"
 import {
   Search,
   ArrowRight,
@@ -32,6 +34,12 @@ import {
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { getAvailableDomainsForMarketplace } from "@/lib/marketplace-data"
+import {
+  checkExternalDomainStatus,
+  requestDomainVerification,
+  verifyDomainOwnershipAction,
+  getDomainVerificationStatus,
+} from "@/app/actions/domain"
 
 interface Domain {
   id: string
@@ -783,82 +791,7 @@ function DomainMarketplace() {
 
   // Sell mode
   return (
-    <>
-      <section className="border-b border-white/10 bg-white/[0.02]">
-        <div className="mx-auto max-w-5xl px-6 py-10">
-          <button
-            onClick={() => setMode(null)}
-            className="mb-6 text-sm text-slate-400 transition hover:text-white"
-          >
-            ← Back to domains
-          </button>
-          <div className="text-center">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-emerald-400">
-              Sell Domains
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              List your domain
-            </h1>
-            <p className="mt-2 text-slate-400">
-              Reach buyers looking for premium domain names
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-xl px-6 py-12">
-        <div className="space-y-5">
-          <div>
-            <label className="mb-2 block text-sm font-medium">Domain name</label>
-            <input
-              placeholder="yourdomain.com"
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/50"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium">Asking price</label>
-            <input
-              placeholder="$10,000"
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/50"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium">Open to leasing?</label>
-            <div className="flex gap-3">
-              <button className="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-medium text-white transition hover:border-emerald-400/30">
-                Yes
-              </button>
-              <button className="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-medium text-white transition hover:border-emerald-400/30">
-                No
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium">Category</label>
-            <select className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none focus:border-emerald-400/50">
-              <option value="">Select category</option>
-              {categories.filter(c => c !== "All").map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium">Description</label>
-            <textarea
-              rows={3}
-              placeholder="Describe the potential of this domain..."
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/50"
-            />
-          </div>
-          <button 
-            onClick={() => handleProtectedAction(() => alert('Submitting listing...'))}
-            className="w-full rounded-xl bg-emerald-400 py-3.5 text-sm font-semibold text-[#0a1220] transition hover:bg-emerald-300"
-          >
-            Submit Listing
-          </button>
-        </div>
-      </section>
-    </>
+    <SellDomainForm onBack={() => setMode(null)} />
   )
 }
 
