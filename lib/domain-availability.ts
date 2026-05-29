@@ -22,10 +22,12 @@ export async function checkRDAPAvailability(domainName: string): Promise<{
     // Extract TLD for RDAP bootstrap lookup
     const parts = normalized.split('.')
     if (parts.length < 2) {
+      const errorMsg = `Invalid domain format: "${normalized}". Please use a valid domain (e.g., example.com)`
+      console.error('[v0]', errorMsg)
       return {
         isAvailable: false,
         externallyRegistered: false,
-        error: 'Invalid domain format',
+        error: errorMsg,
       }
     }
 
@@ -33,6 +35,7 @@ export async function checkRDAPAvailability(domainName: string): Promise<{
 
     // Try RDAP lookup
     try {
+      console.log('[v0] Checking RDAP registry for:', normalized)
       const rdapUrl = `https://rdap.org/domain/${normalized}`
       const response = await fetch(rdapUrl, {
         headers: { 'Accept': 'application/rdap+json' },
@@ -41,41 +44,50 @@ export async function checkRDAPAvailability(domainName: string): Promise<{
 
       if (response.status === 200) {
         // Domain exists in RDAP registry
+        console.log('[v0] RDAP: Domain is registered:', normalized)
         return {
           isAvailable: false,
           externallyRegistered: true,
         }
       } else if (response.status === 404) {
         // Domain does not exist
+        console.log('[v0] RDAP: Domain is not registered:', normalized)
         return {
           isAvailable: true,
           externallyRegistered: false,
         }
+      } else {
+        console.log('[v0] RDAP: Unexpected status:', response.status)
       }
     } catch (rdapError) {
-      console.error('[v0] RDAP lookup failed:', rdapError)
+      console.error('[v0] RDAP lookup failed:', rdapError instanceof Error ? rdapError.message : rdapError)
       // Fall through to whois check
     }
 
     // Fallback: Check via WHOIS (simple TCP lookup)
     try {
+      console.log('[v0] Falling back to WHOIS check for:', normalized)
       const whoisResult = await checkWhoisAvailability(normalized)
+      console.log('[v0] WHOIS result:', whoisResult)
       return whoisResult
     } catch (whoisError) {
-      console.error('[v0] WHOIS lookup failed:', whoisError)
+      console.error('[v0] WHOIS lookup failed:', whoisError instanceof Error ? whoisError.message : whoisError)
       // If both fail, assume unavailable for safety
+      const errorMsg = 'Could not verify domain registration status. This may be a temporary network issue. Please try again in a few moments.'
+      console.error('[v0]', errorMsg)
       return {
         isAvailable: false,
         externallyRegistered: true,
-        error: 'Could not verify availability',
+        error: errorMsg,
       }
     }
   } catch (error) {
-    console.error('[v0] Domain availability check error:', error)
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[v0] Domain availability check error:', errorMsg)
     return {
       isAvailable: false,
       externallyRegistered: false,
-      error: 'Failed to check domain availability',
+      error: `Failed to check domain availability: ${errorMsg}`,
     }
   }
 }
