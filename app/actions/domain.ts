@@ -176,19 +176,26 @@ export async function markDomainAsLeased({
 
 /**
  * Get all available domains for marketplace (only verified, public listings)
+ * Only shows domains where:
+ * - status = 'available'
+ * - verificationStatus = 'verified_owner'
+ * - externallyRegistered = true
  */
 export async function getAvailableDomains() {
   try {
+    console.log('[v0] Fetching available domains from marketplace')
     const domains = await db
       .select()
       .from(domainTable)
       .where(
         and(
           eq(domainTable.status, 'available'),
-          eq(domainTable.verificationStatus, 'verified_owner')
+          eq(domainTable.verificationStatus, 'verified_owner'),
+          eq(domainTable.externallyRegistered, true)
         )
       )
 
+    console.log(`[v0] Found ${domains.length} available domains`)
     return {
       success: true,
       domains,
@@ -196,9 +203,10 @@ export async function getAvailableDomains() {
   } catch (error) {
     console.error('[v0] Error fetching available domains:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[v0] Full error details:', errorMessage)
     return {
       success: false,
-      error: `Failed to fetch available domains: ${errorMessage}. Check that the domain table exists.`,
+      error: `Failed to fetch available domains: ${errorMessage}`,
     }
   }
 }
@@ -381,7 +389,8 @@ export async function submitDomainListing({
   try {
     const normalized = normalizeDomainName(domainName)
 
-    // Check if domain already exists in LeadsWork
+    // STEP 1: Internal LeadsWork database check
+    console.log('[v0] Step 1: Checking LeadsWork database for', normalized)
     const existing = await db
       .select()
       .from(domainTable)
@@ -389,23 +398,43 @@ export async function submitDomainListing({
       .limit(1)
 
     if (existing.length > 0) {
-      return {
-        success: false,
-        error: 'This domain is already listed on LeadsWork',
+      const domain = existing[0]
+      // Block if status is available, pending_verification, sold, or leased
+      const blockedStatuses = ['available', 'pending_verification', 'sold', 'leased', 'verified']
+      if (blockedStatuses.includes(domain.status)) {
+        console.log(`[v0] Domain already listed with status: ${domain.status}`)
+        return {
+          success: false,
+          error: `This domain is already listed on LeadsWork (status: ${domain.status}). Only one listing per domain is allowed.`,
+        }
       }
     }
 
-    // Check external domain availability
+    // STEP 2: External internet/DNS check
+    console.log('[v0] Step 2: Checking external domain registration')
     const externalCheck = await getDomainAvailability(domainName)
     
     if (!externalCheck.success) {
+      console.error('[v0] External domain check failed:', externalCheck.error)
       return {
         success: false,
-        error: 'Could not verify domain status. Please try again.',
+        error: `Could not verify domain registration status: ${externalCheck.error || 'Unknown error'}. Please try again or contact support.`,
       }
     }
 
-    // Create domain with pending_verification status
+    // For listing on LeadsWork, domain MUST be externally registered
+    // We require DNS TXT verification to prove ownership
+    if (!externalCheck.externallyRegistered) {
+      console.log('[v0] Domain is not externally registered - cannot list')
+      return {
+        success: false,
+        error: 'Domain is not registered on the internet. You can only list domains you already own and control.',
+      }
+    }
+
+    console.log('[v0] Domain is externally registered - proceeding to create listing')
+
+    // STEP 3: Create domain with pending_verification status
     const domainId = randomUUID()
     
     // Score calculation (0-100)
@@ -413,6 +442,8 @@ export async function submitDomainListing({
 
     const buyPriceInCents = Math.round(buyPrice * 100)
     const leasePriceInCents = Math.round(leasePrice * 100)
+
+    console.log('[v0] Creating domain record:', { domainId, normalized, status: 'pending_verification' })
 
     await db.insert(domainTable).values({
       id: domainId,
@@ -425,37 +456,42 @@ export async function submitDomainListing({
       score,
       status: 'pending_verification',
       ownerId: userId,
-      externallyRegistered: externalCheck.externallyRegistered,
+      externallyRegistered: true,
       verificationStatus: 'pending_verification',
       createdAt: new Date(),
       updatedAt: new Date(),
     })
 
-    // Request verification
+    // STEP 4: Request DNS verification
+    console.log('[v0] Creating verification request for domain', domainId)
     const verificationResult = await createVerificationRequest({
       domainId,
       userId,
     })
 
     if (!verificationResult.success) {
+      console.error('[v0] Failed to create verification request:', verificationResult.error)
       return {
         success: false,
-        error: 'Failed to create verification request',
+        error: 'Failed to create verification request. Please try again.',
       }
     }
+
+    console.log('[v0] Domain listing created successfully. Verification code:', verificationResult.verificationCode)
 
     return {
       success: true,
       domainId,
       verificationCode: verificationResult.verificationCode,
-      message: 'Domain listing created. Please verify ownership to make it live.',
+      message: 'Domain listing created. Please verify ownership via DNS TXT record to make it live.',
     }
   } catch (error) {
     console.error('[v0] Error submitting domain listing:', error)
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[v0] Full error details:', errorMsg)
     return {
       success: false,
-      error: `Database error: ${errorMsg}. Please ensure the domain table exists and all columns are present.`,
+      error: `Failed to submit domain listing: ${errorMsg}. Please ensure all required fields are filled and try again.`,
     }
   }
 }
@@ -471,6 +507,8 @@ export async function confirmDomainVerification({
   userId: string
 }) {
   try {
+    console.log('[v0] Starting domain verification confirmation for:', { domainId, userId })
+    
     // Verify ownership via DNS
     const domain = await db
       .select()
@@ -479,6 +517,7 @@ export async function confirmDomainVerification({
       .limit(1)
 
     if (domain.length === 0) {
+      console.error('[v0] Domain not found:', domainId)
       return {
         success: false,
         verified: false,
@@ -486,17 +525,35 @@ export async function confirmDomainVerification({
       }
     }
 
+    const domainRecord = domain[0]
+    console.log('[v0] Found domain:', domainRecord.displayName)
+
+    // Check that the requesting user is the owner
+    if (domainRecord.ownerId !== userId) {
+      console.error('[v0] User is not the owner of this domain')
+      return {
+        success: false,
+        verified: false,
+        error: 'You do not own this domain',
+      }
+    }
+
+    // Verify ownership via DNS TXT record
+    console.log('[v0] Verifying DNS TXT record for:', domainRecord.displayName)
     const verificationResult = await verifyDomainOwnership({
       domainId,
-      domainName: domain[0].displayName,
+      domainName: domainRecord.displayName,
       userId,
     })
 
     if (!verificationResult.success || !verificationResult.verified) {
+      console.error('[v0] DNS verification failed:', verificationResult.error)
       return verificationResult
     }
 
-    // Update domain status to available
+    console.log('[v0] DNS verification successful! Updating domain status to available')
+
+    // Update domain status to available only after DNS verification passes
     const now = new Date()
     await db
       .update(domainTable)
@@ -507,7 +564,7 @@ export async function confirmDomainVerification({
       })
       .where(eq(domainTable.id, domainId))
 
-    console.log('[v0] Domain verified and made available:', domainId)
+    console.log('[v0] Domain verified and made available on marketplace:', domainId)
 
     return {
       success: true,
@@ -517,6 +574,7 @@ export async function confirmDomainVerification({
   } catch (error) {
     console.error('[v0] Error confirming domain verification:', error)
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[v0] Full error details:', errorMsg)
     return {
       success: false,
       verified: false,

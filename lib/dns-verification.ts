@@ -89,7 +89,7 @@ export async function createVerificationRequest({
 /**
  * Verify DNS TXT record for domain ownership
  */
-export async function verifyDNSRecord(domainName: string): Promise<{
+export async function verifyDNSRecord(domainName: string, expectedCode?: string): Promise<{
   success: boolean
   verified: boolean
   foundRecords?: string[]
@@ -98,6 +98,7 @@ export async function verifyDNSRecord(domainName: string): Promise<{
   try {
     // Remove www prefix if present
     const cleanDomain = domainName.replace(/^www\./, '').toLowerCase()
+    console.log('[v0] Verifying DNS TXT records for:', cleanDomain)
 
     // Query DNS TXT records
     const response = await fetch(`https://dns.google/resolve?name=${cleanDomain}&type=TXT`, {
@@ -105,10 +106,12 @@ export async function verifyDNSRecord(domainName: string): Promise<{
     })
 
     if (!response.ok) {
+      const errorMsg = `Failed to query DNS records for ${cleanDomain}: HTTP ${response.status}`
+      console.error('[v0]', errorMsg)
       return {
         success: false,
         verified: false,
-        error: 'Failed to query DNS records',
+        error: errorMsg,
       }
     }
 
@@ -117,12 +120,36 @@ export async function verifyDNSRecord(domainName: string): Promise<{
     }
 
     const txtRecords = data.Answer?.map((record) => record.data) || []
-    console.log('[v0] DNS TXT records found:', txtRecords)
+    console.log('[v0] DNS TXT records found:', txtRecords.length > 0 ? txtRecords : 'none')
+
+    if (txtRecords.length === 0) {
+      console.log('[v0] No TXT records found for:', cleanDomain)
+      return {
+        success: true,
+        verified: false,
+        foundRecords: [],
+        error: `No TXT records found for ${cleanDomain}. Make sure you added the verification record to your DNS.`,
+      }
+    }
 
     // Check if any record contains leadswork-verify prefix
-    const verified = txtRecords.some((record) =>
-      record.includes('leadswork-verify-') || record.includes('leadswork-verify')
-    )
+    const verified = txtRecords.some((record) => {
+      const isMatch = record.includes('leadswork-verify-') || record.includes('leadswork-verify')
+      console.log('[v0] TXT Record check:', { record, isMatch })
+      return isMatch
+    })
+
+    if (!verified && expectedCode) {
+      console.log('[v0] Expected code not found. Looking for:', expectedCode)
+      const exactMatch = txtRecords.some(r => r.includes(expectedCode))
+      console.log('[v0] Exact code match:', exactMatch)
+    }
+
+    if (verified) {
+      console.log('[v0] DNS verification successful! Found leadswork-verify record')
+    } else {
+      console.log('[v0] DNS verification failed. Found records:', txtRecords)
+    }
 
     return {
       success: true,
@@ -130,11 +157,12 @@ export async function verifyDNSRecord(domainName: string): Promise<{
       foundRecords: txtRecords,
     }
   } catch (error) {
-    console.error('[v0] DNS verification check error:', error)
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[v0] DNS verification check error:', errorMsg)
     return {
       success: false,
       verified: false,
-      error: 'Failed to verify DNS records',
+      error: `DNS lookup failed: ${errorMsg}. This may be temporary. Please try again.`,
     }
   }
 }
@@ -156,6 +184,8 @@ export async function verifyDomainOwnership({
   error?: string
 }> {
   try {
+    console.log('[v0] Starting domain ownership verification:', { domainId, domainName, userId })
+    
     // Get the verification request
     const verification = await db
       .select()
@@ -170,28 +200,52 @@ export async function verifyDomainOwnership({
       .limit(1)
 
     if (verification.length === 0) {
+      const errorMsg = 'No pending verification found for this domain'
+      console.error('[v0]', errorMsg)
       return {
         success: false,
         verified: false,
-        error: 'No pending verification found',
+        error: errorMsg,
       }
     }
 
     const verificationRecord = verification[0]
+    console.log('[v0] Found verification record:', {
+      id: verificationRecord.id,
+      verificationCode: verificationRecord.verificationCode,
+      expiresAt: verificationRecord.expiresAt,
+    })
 
-    // Check DNS records
-    const dnsCheck = await verifyDNSRecord(domainName)
+    // Check DNS records for the verification code
+    console.log('[v0] Checking DNS records for verification code...')
+    const dnsCheck = await verifyDNSRecord(domainName, verificationRecord.verificationCode)
 
-    if (!dnsCheck.success || !dnsCheck.verified) {
+    if (!dnsCheck.success) {
+      console.error('[v0] DNS check failed:', dnsCheck.error)
       return {
         success: true,
         verified: false,
-        error: `DNS verification failed. Please add the TXT record "${verificationRecord.verificationCode}" to your domain.`,
+        error: `DNS lookup error: ${dnsCheck.error}`,
+      }
+    }
+
+    if (!dnsCheck.verified) {
+      const detailedMsg = dnsCheck.foundRecords && dnsCheck.foundRecords.length > 0
+        ? `DNS verification failed. Found ${dnsCheck.foundRecords.length} TXT record(s), but none contain the verification code "${verificationRecord.verificationCode}". Please add this exact code as a TXT record to your domain.`
+        : `DNS verification failed. Please add the TXT record "${verificationRecord.verificationCode}" to your domain's DNS settings.`
+      
+      console.error('[v0] DNS verification failed:', detailedMsg)
+      return {
+        success: true,
+        verified: false,
+        error: detailedMsg,
       }
     }
 
     // Update verification status to verified
     const verifiedAt = new Date()
+    console.log('[v0] DNS verification successful! Updating verification record...')
+    
     await db
       .update(domainVerification)
       .set({
@@ -201,18 +255,20 @@ export async function verifyDomainOwnership({
       })
       .where(eq(domainVerification.id, verificationRecord.id))
 
-    console.log('[v0] Domain ownership verified:', domainName, 'for user:', userId)
+    console.log('[v0] Domain ownership verified successfully:', domainName, 'for user:', userId)
 
     return {
       success: true,
       verified: true,
     }
   } catch (error) {
-    console.error('[v0] Domain ownership verification error:', error)
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[v0] Domain ownership verification error:', errorMsg)
+    console.error('[v0] Full error:', error)
     return {
       success: false,
       verified: false,
-      error: 'Failed to verify domain ownership',
+      error: `Verification error: ${errorMsg}. Please try again or contact support.`,
     }
   }
 }
