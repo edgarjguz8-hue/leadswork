@@ -9,6 +9,8 @@ import {
   requestDomainVerification,
   verifyDomainOwnershipAction,
   getDomainVerificationStatus,
+  submitDomainListing,
+  confirmDomainVerification,
 } from '@/app/actions/domain'
 import { normalizeDomainName, isValidDomainName, getDomainValidationError } from '@/lib/domain-utils'
 import { AlertCircle, Check, Loader } from 'lucide-react'
@@ -38,6 +40,8 @@ export default function SellDomainForm({ onBack }: { onBack: () => void }) {
   const [showVerification, setShowVerification] = useState(false)
   const [verificationCode, setVerificationCode] = useState<string | null>(null)
   const [verificationExpires, setVerificationExpires] = useState<Date | null>(null)
+  const [createdDomainId, setCreatedDomainId] = useState<string | null>(null)
+  const [verifyingOwnership, setVerifyingOwnership] = useState(false)
 
   const categories = [
     'Technology',
@@ -192,28 +196,63 @@ export default function SellDomainForm({ onBack }: { onBack: () => void }) {
       return
     }
 
-    // Check if domain is externally registered and requires verification
-    if (externalStatus?.externallyRegistered) {
-      setError('You must verify ownership of this domain before listing it on LeadsWork.')
-      handleRequestVerification()
-      return
-    }
-
     setLoading(true)
     setError(null)
 
     try {
-      // TODO: Call server action to create domain listing
-      // For now, show success message
-      setSuccess('Domain listing submitted! (Feature coming soon)')
-      setTimeout(() => {
-        onBack()
-      }, 2000)
+      const result = await submitDomainListing({
+        userId: session.user.id,
+        domainName: domainInput,
+        buyPrice: parseFloat(price),
+        leasePrice: openToLeasing ? parseFloat(leasePrice) : 0,
+        category,
+        description,
+        isLeasing: openToLeasing,
+      })
+
+      if (result.success && result.domainId) {
+        setCreatedDomainId(result.domainId)
+        setVerificationCode(result.verificationCode || null)
+        setShowVerification(true)
+        setSuccess(null)
+      } else {
+        setError(result.error || 'Failed to submit listing')
+      }
     } catch (err) {
       console.error('[v0] Error submitting listing:', err)
       setError('Failed to submit listing')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleVerifyDNS = async () => {
+    if (!session?.user || !createdDomainId) {
+      return
+    }
+
+    setVerifyingOwnership(true)
+    setError(null)
+
+    try {
+      const result = await confirmDomainVerification({
+        domainId: createdDomainId,
+        userId: session.user.id,
+      })
+
+      if (result.success && result.verified) {
+        setSuccess('Your domain has been verified and posted successfully!')
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 2000)
+      } else {
+        setError(result.error || 'DNS verification failed. Please check your DNS records and try again.')
+      }
+    } catch (err) {
+      console.error('[v0] Error verifying DNS:', err)
+      setError('Failed to verify DNS records')
+    } finally {
+      setVerifyingOwnership(false)
     }
   }
 
@@ -301,13 +340,14 @@ export default function SellDomainForm({ onBack }: { onBack: () => void }) {
           </div>
 
           {/* Verification Modal */}
-          {showVerification && verificationCode && verificationExpires && (
+          {showVerification && verificationCode && createdDomainId && (
             <OwnershipVerification
               domainName={domainInput}
               verificationCode={verificationCode}
-              expiresAt={verificationExpires}
-              onVerify={handleVerifyOwnership}
+              expiresAt={verificationExpires || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)}
+              onVerify={handleVerifyDNS}
               onClose={() => setShowVerification(false)}
+              isVerifying={verifyingOwnership}
             />
           )}
 
