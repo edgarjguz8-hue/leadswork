@@ -216,15 +216,15 @@ export default function DomainListingDetail({
               </div>
 
               {/* Actions */}
-              {isPending && (
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-sky-400 bg-sky-400/10 px-4 py-2.5 text-sm font-medium text-sky-400 transition hover:bg-sky-400/20"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                    Edit Listing
-                  </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-sky-400 bg-sky-400/10 px-4 py-2.5 text-sm font-medium text-sky-400 transition hover:bg-sky-400/20"
+                >
+                  <Edit2 className="h-4 w-4" />
+                  Edit Listing
+                </button>
+                {isPending && (
                   <button
                     onClick={handleDelete}
                     disabled={isDeleting}
@@ -237,8 +237,8 @@ export default function DomainListingDetail({
                     )}
                     Delete
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </>
         ) : (
