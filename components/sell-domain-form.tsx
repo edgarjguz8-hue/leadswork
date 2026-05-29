@@ -5,19 +5,15 @@ import { useSession } from '@/lib/auth-client'
 import { useRouter } from 'next/navigation'
 import OwnershipVerification from '@/components/ownership-verification'
 import {
-  checkExternalDomainStatus,
-  requestDomainVerification,
-  verifyDomainOwnershipAction,
-  getDomainVerificationStatus,
   submitDomainListing,
   confirmDomainVerification,
 } from '@/app/actions/domain'
-import { normalizeDomainName, isValidDomainName, getDomainValidationError } from '@/lib/domain-utils'
-import { AlertCircle, Check, Loader } from 'lucide-react'
+import { normalizeDomainName, getDomainValidationError } from '@/lib/domain-utils'
+import { AlertCircle, Check, Loader2, CheckCircle2 } from 'lucide-react'
 
 export default function SellDomainForm({ onBack }: { onBack: () => void }) {
   const router = useRouter()
-  const { data: session } = useSession()
+  const { data: session, isPending: sessionPending } = useSession()
 
   const [domainInput, setDomainInput] = useState('')
   const [price, setPrice] = useState('')
@@ -30,18 +26,11 @@ export default function SellDomainForm({ onBack }: { onBack: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const [externalCheckLoading, setExternalCheckLoading] = useState(false)
-  const [externalStatus, setExternalStatus] = useState<{
-    isAvailable: boolean
-    externallyRegistered: boolean
-    message: string
-  } | null>(null)
-
   const [showVerification, setShowVerification] = useState(false)
   const [verificationCode, setVerificationCode] = useState<string | null>(null)
-  const [verificationExpires, setVerificationExpires] = useState<Date | null>(null)
   const [createdDomainId, setCreatedDomainId] = useState<string | null>(null)
-  const [verifyingOwnership, setVerifyingOwnership] = useState(false)
+  const [verifyingDNS, setVerifyingDNS] = useState(false)
+  const [verificationSuccess, setVerificationSuccess] = useState(false)
 
   const categories = [
     'Technology',
@@ -56,171 +45,89 @@ export default function SellDomainForm({ onBack }: { onBack: () => void }) {
     'AI & Machine Learning',
   ]
 
-  // Validate domain on input change
-  const handleDomainChange = async (value: string) => {
-    setDomainInput(value)
-    setExternalStatus(null)
-    setShowVerification(false)
+  // Check auth on mount
+  if (!sessionPending && !session?.user) {
+    router.push('/sign-in')
+    return null
+  }
 
-    if (!value) {
-      setError(null)
+  const handleSubmitListing = async () => {
+    if (!session?.user) {
+      setError('You must be logged in to submit a listing')
       return
     }
 
-    // Validate format
-    const validationError = getDomainValidationError(value)
+    // Validate all fields
+    if (!domainInput.trim()) {
+      setError('Domain name is required')
+      return
+    }
+
+    if (!price.trim()) {
+      setError('Asking price is required')
+      return
+    }
+
+    const priceNum = parseFloat(price)
+    if (isNaN(priceNum) || priceNum <= 0) {
+      setError('Asking price must be a valid positive number')
+      return
+    }
+
+    if (openToLeasing) {
+      if (!leasePrice.trim()) {
+        setError('Lease price is required')
+        return
+      }
+      const leasePriceNum = parseFloat(leasePrice)
+      if (isNaN(leasePriceNum) || leasePriceNum <= 0) {
+        setError('Lease price must be a valid positive number')
+        return
+      }
+    }
+
+    if (!category.trim()) {
+      setError('Category is required')
+      return
+    }
+
+    if (!description.trim()) {
+      setError('Description is required')
+      return
+    }
+
+    // Validate domain format
+    const validationError = getDomainValidationError(domainInput)
     if (validationError) {
       setError(validationError)
       return
     }
 
-    // Check external availability
-    setExternalCheckLoading(true)
-    setError(null)
-
-    try {
-      const result = await checkExternalDomainStatus(value)
-
-      if (result.success) {
-        setExternalStatus({
-          isAvailable: result.isAvailable,
-          externallyRegistered: result.externallyRegistered,
-          message: result.message,
-        })
-
-        if (!result.isAvailable && result.externallyRegistered) {
-          setError(result.message)
-        }
-      } else {
-        setError(result.error || 'Failed to check domain availability')
-      }
-    } catch (err) {
-      console.error('[v0] Error checking domain:', err)
-      setError('Failed to verify domain')
-    } finally {
-      setExternalCheckLoading(false)
-    }
-  }
-
-  // Request verification for externally registered domain
-  const handleRequestVerification = async () => {
-    if (!session?.user || !externalStatus?.externallyRegistered) {
-      return
-    }
-
     setLoading(true)
     setError(null)
 
     try {
-      // Create a temporary domain ID based on normalized name for verification
       const normalized = normalizeDomainName(domainInput)
-      const domainId = `temp_${normalized}_${Date.now()}`
-
-      const result = await requestDomainVerification({
-        domainId,
-        userId: session.user.id,
-      })
-
-      if (result.success && result.verificationCode) {
-        setVerificationCode(result.verificationCode)
-        // Calculate expiry (7 days from now, or use provided expiry)
-        const expiry = result.existingVerification?.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-        setVerificationExpires(expiry)
-        setShowVerification(true)
-      } else {
-        setError(result.error || 'Failed to request verification')
-      }
-    } catch (err) {
-      console.error('[v0] Error requesting verification:', err)
-      setError('Failed to request verification')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleVerifyOwnership = async () => {
-    if (!session?.user || !verificationCode || !externalStatus?.externallyRegistered) {
-      return
-    }
-
-    const normalized = normalizeDomainName(domainInput)
-    const domainId = `temp_${normalized}_${Date.now()}`
-
-    try {
-      const result = await verifyDomainOwnershipAction({
-        domainId,
-        domainName: domainInput,
-        userId: session.user.id,
-      })
-
-      return result
-    } catch (err) {
-      console.error('[v0] Error verifying:', err)
-      return {
-        success: false,
-        verified: false,
-        error: 'Verification failed',
-      }
-    }
-  }
-
-  const handleSubmitListing = async () => {
-    if (!session?.user) {
-      router.push('/sign-in')
-      return
-    }
-
-    // Validate all fields
-    if (!domainInput) {
-      setError('Domain name is required')
-      return
-    }
-
-    if (!price) {
-      setError('Asking price is required')
-      return
-    }
-
-    if (openToLeasing && !leasePrice) {
-      setError('Lease price is required')
-      return
-    }
-
-    if (!category) {
-      setError('Category is required')
-      return
-    }
-
-    if (!description) {
-      setError('Description is required')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
       const result = await submitDomainListing({
         userId: session.user.id,
-        domainName: domainInput,
-        buyPrice: parseFloat(price),
+        domainName: normalized,
+        buyPrice: priceNum,
         leasePrice: openToLeasing ? parseFloat(leasePrice) : 0,
         category,
         description,
         isLeasing: openToLeasing,
       })
 
-      if (result.success && result.domainId) {
+      if (result.success && result.domainId && result.verificationCode) {
         setCreatedDomainId(result.domainId)
-        setVerificationCode(result.verificationCode || null)
+        setVerificationCode(result.verificationCode)
         setShowVerification(true)
-        setSuccess(null)
       } else {
-        setError(result.error || 'Failed to submit listing')
+        setError(result.error || 'Failed to submit domain listing')
       }
     } catch (err) {
       console.error('[v0] Error submitting listing:', err)
-      setError('Failed to submit listing')
+      setError('An error occurred while submitting your listing. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -228,10 +135,11 @@ export default function SellDomainForm({ onBack }: { onBack: () => void }) {
 
   const handleVerifyDNS = async () => {
     if (!session?.user || !createdDomainId) {
+      setError('Session lost. Please try again.')
       return
     }
 
-    setVerifyingOwnership(true)
+    setVerifyingDNS(true)
     setError(null)
 
     try {
@@ -241,19 +149,29 @@ export default function SellDomainForm({ onBack }: { onBack: () => void }) {
       })
 
       if (result.success && result.verified) {
+        setVerificationSuccess(true)
         setSuccess('Your domain has been verified and posted successfully!')
+        
         setTimeout(() => {
-          router.push('/dashboard')
+          router.push('/dashboard?tab=selling')
         }, 2000)
       } else {
-        setError(result.error || 'DNS verification failed. Please check your DNS records and try again.')
+        setError(result.error || 'We could not verify ownership yet. Please make sure the TXT record was added correctly. DNS updates can take a few minutes.')
       }
     } catch (err) {
       console.error('[v0] Error verifying DNS:', err)
-      setError('Failed to verify DNS records')
+      setError('Failed to verify DNS records. Please try again.')
     } finally {
-      setVerifyingOwnership(false)
+      setVerifyingDNS(false)
     }
+  }
+
+  if (sessionPending) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-sky-400" />
+      </div>
+    )
   }
 
   return (
@@ -280,189 +198,152 @@ export default function SellDomainForm({ onBack }: { onBack: () => void }) {
         </div>
       </section>
 
+      {/* Verification Success */}
+      {verificationSuccess && success && (
+        <div className="border-b border-emerald-400/30 bg-emerald-400/10 px-6 py-4">
+          <div className="mx-auto max-w-5xl">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+              <p className="text-sm text-emerald-400">{success}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="mx-auto max-w-xl px-6 py-12">
-        <div className="space-y-5">
-          {/* Domain Input with External Check */}
-          <div>
-            <label className="mb-2 block text-sm font-medium">Domain name</label>
-            <div className="relative">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-400/30 bg-red-400/10 p-4">
+            <div className="flex gap-3">
+              <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {!showVerification ? (
+          <div className="space-y-5">
+            <div>
+              <label className="mb-2 block text-sm font-medium">Domain name *</label>
               <input
+                type="text"
+                placeholder="yourdomain.com or https://www.yourdomain.com"
                 value={domainInput}
-                onChange={(e) => handleDomainChange(e.target.value)}
-                placeholder="yourdomain.com"
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/50 disabled:opacity-50"
-                disabled={externalCheckLoading}
+                onChange={(e) => setDomainInput(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/50"
               />
-              {externalCheckLoading && (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <Loader className="h-4 w-4 animate-spin text-slate-400" />
-                </div>
-              )}
-              {externalStatus && !externalCheckLoading && (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  {externalStatus.isAvailable ? (
-                    <Check className="h-4 w-4 text-emerald-400" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4 text-amber-400" />
-                  )}
-                </div>
-              )}
+              <p className="mt-1 text-xs text-slate-500">
+                We&apos;ll normalize to: {domainInput ? normalizeDomainName(domainInput) : '(e.g., yourdomain.com)'}
+              </p>
             </div>
 
-            {/* External Status Message */}
-            {externalStatus && (
-              <div
-                className={`mt-2 p-3 rounded-lg text-sm flex items-start gap-2 ${
-                  externalStatus.isAvailable
-                    ? 'bg-emerald-400/10 border border-emerald-400/20 text-emerald-400'
-                    : 'bg-amber-400/10 border border-amber-400/20 text-amber-400'
-                }`}
-              >
-                {externalStatus.isAvailable ? (
-                  <Check className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                ) : (
-                  <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                )}
-                <span>{externalStatus.message}</span>
+            <div>
+              <label className="mb-2 block text-sm font-medium">Asking price ($) *</label>
+              <input
+                type="number"
+                placeholder="10000"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/50"
+                min="1"
+                step="0.01"
+              />
+            </div>
+
+            <div>
+              <label className="mb-3 block text-sm font-medium">Open to leasing?</label>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setOpenToLeasing(false)}
+                  className={`flex-1 rounded-xl border py-3 text-sm font-medium transition ${
+                    !openToLeasing
+                      ? 'border-emerald-400/50 bg-emerald-400/10 text-white'
+                      : 'border-white/10 bg-white/5 text-slate-400 hover:border-emerald-400/30'
+                  }`}
+                >
+                  No
+                </button>
+                <button
+                  onClick={() => setOpenToLeasing(true)}
+                  className={`flex-1 rounded-xl border py-3 text-sm font-medium transition ${
+                    openToLeasing
+                      ? 'border-emerald-400/50 bg-emerald-400/10 text-white'
+                      : 'border-white/10 bg-white/5 text-slate-400 hover:border-emerald-400/30'
+                  }`}
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
+
+            {openToLeasing && (
+              <div>
+                <label className="mb-2 block text-sm font-medium">Monthly lease price ($) *</label>
+                <input
+                  type="number"
+                  placeholder="500"
+                  value={leasePrice}
+                  onChange={(e) => setLeasePrice(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/50"
+                  min="1"
+                  step="0.01"
+                />
               </div>
             )}
 
-            {/* Verification Button for Registered Domains */}
-            {externalStatus?.externallyRegistered && !showVerification && (
-              <button
-                onClick={handleRequestVerification}
-                disabled={loading}
-                className="mt-3 w-full rounded-lg bg-emerald-400/10 border border-emerald-400/30 py-2 text-sm font-medium text-emerald-400 transition hover:bg-emerald-400/20 disabled:opacity-50"
-              >
-                {loading ? 'Requesting verification...' : 'Verify Ownership'}
-              </button>
-            )}
-          </div>
-
-          {/* Verification Modal */}
-          {showVerification && verificationCode && createdDomainId && (
-            <OwnershipVerification
-              domainName={domainInput}
-              verificationCode={verificationCode}
-              expiresAt={verificationExpires || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)}
-              onVerify={handleVerifyDNS}
-              onClose={() => setShowVerification(false)}
-              isVerifying={verifyingOwnership}
-            />
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-400">{error}</p>
-            </div>
-          )}
-
-          {/* Success Message */}
-          {success && (
-            <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 flex items-start gap-2">
-              <Check className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-emerald-400">{success}</p>
-            </div>
-          )}
-
-          {/* Price Input */}
-          <div>
-            <label className="mb-2 block text-sm font-medium">Asking price</label>
-            <input
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="$10,000"
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/50"
-            />
-          </div>
-
-          {/* Lease Option */}
-          <div>
-            <label className="mb-2 block text-sm font-medium">Open to leasing?</label>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setOpenToLeasing(true)}
-                className={`flex-1 rounded-xl border py-3 text-sm font-medium transition ${
-                  openToLeasing
-                    ? 'border-emerald-400/50 bg-emerald-400/10 text-emerald-400'
-                    : 'border-white/10 bg-white/5 text-white hover:border-emerald-400/30'
-                }`}
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => setOpenToLeasing(false)}
-                className={`flex-1 rounded-xl border py-3 text-sm font-medium transition ${
-                  !openToLeasing
-                    ? 'border-emerald-400/50 bg-emerald-400/10 text-emerald-400'
-                    : 'border-white/10 bg-white/5 text-white hover:border-emerald-400/30'
-                }`}
-              >
-                No
-              </button>
-            </div>
-          </div>
-
-          {/* Lease Price */}
-          {openToLeasing && (
             <div>
-              <label className="mb-2 block text-sm font-medium">Monthly lease price</label>
-              <input
-                value={leasePrice}
-                onChange={(e) => setLeasePrice(e.target.value)}
-                placeholder="$500/mo"
+              <label className="mb-2 block text-sm font-medium">Category *</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none focus:border-emerald-400/50"
+              >
+                <option value="">Select a category</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium">Description *</label>
+              <textarea
+                rows={4}
+                placeholder="Describe the potential of this domain, target market, use cases..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/50"
               />
             </div>
-          )}
 
-          {/* Category */}
-          <div>
-            <label className="mb-2 block text-sm font-medium">Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none focus:border-emerald-400/50"
+            <button
+              onClick={handleSubmitListing}
+              disabled={loading}
+              className="w-full rounded-xl bg-emerald-400 py-3.5 text-sm font-semibold text-[#0a1220] transition hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              <option value="">Select category</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4" />
+                  <span>Submit Listing</span>
+                </>
+              )}
+            </button>
           </div>
-
-          {/* Description */}
-          <div>
-            <label className="mb-2 block text-sm font-medium">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              placeholder="Describe the potential of this domain..."
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/50"
-            />
-          </div>
-
-          {/* Submit Button */}
-          <button
-            onClick={handleSubmitListing}
-            disabled={loading || externalCheckLoading}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-400 py-3.5 text-sm font-semibold text-[#0a1220] transition hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <Loader className="h-4 w-4 animate-spin" />
-                <span>Submitting...</span>
-              </>
-            ) : (
-              'Submit Listing'
-            )}
-          </button>
-        </div>
+        ) : (
+          <OwnershipVerification
+            domainName={domainInput}
+            verificationCode={verificationCode || ''}
+            expiresAt={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)}
+            onVerify={handleVerifyDNS}
+            onClose={() => setShowVerification(false)}
+            isVerifying={verifyingDNS}
+          />
+        )}
       </section>
     </>
   )
