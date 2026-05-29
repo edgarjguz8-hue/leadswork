@@ -190,14 +190,15 @@ function DomainMarketplace() {
 
   const filteredDomains = useMemo(() => {
     return domains.filter((domain) => {
+      // "All" category shows all domains regardless of their category
       const matchesCategory =
-        category === "All" || domain.category === category
+        category === "All" ? true : domain.category === category
       const matchesQuery =
         domain.name.toLowerCase().includes(query.toLowerCase()) ||
         domain.idea.toLowerCase().includes(query.toLowerCase())
       return matchesCategory && matchesQuery
     })
-  }, [query, category])
+  }, [query, category, domains])
 
   // Landing view - no mode selected yet
   if (!mode) {
