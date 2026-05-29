@@ -189,10 +189,11 @@ export async function getAvailableDomains() {
       domains,
     }
   } catch (error) {
-    console.error('Error fetching available domains:', error)
+    console.error('[v0] Error fetching available domains:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return {
       success: false,
-      error: 'Failed to fetch available domains',
+      error: `Failed to fetch available domains: ${errorMessage}`,
     }
   }
 }
@@ -446,9 +447,10 @@ export async function submitDomainListing({
     }
   } catch (error) {
     console.error('[v0] Error submitting domain listing:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return {
       success: false,
-      error: 'Failed to submit domain listing',
+      error: `Failed to submit domain listing: ${errorMessage}`,
     }
   }
 }
