@@ -634,14 +634,8 @@ export async function editDomainListing({
       }
     }
 
-    // Only allow editing if status is pending or if verification failed
-    const editableStatuses = ['pending', 'unverified']
-    if (!editableStatuses.includes(domainRecord.status)) {
-      return {
-        success: false,
-        error: `Cannot edit domain with status "${domainRecord.status}". Only pending listings can be edited.`,
-      }
-    }
+    // Allow editing listings in any status (pending, unverified, available, etc.)
+    // Users can always adjust pricing and category
 
     const buyPriceInCents = Math.round(buyPrice * 100)
     const leasePriceInCents = Math.round(leasePrice * 100)
