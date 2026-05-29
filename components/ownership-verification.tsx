@@ -9,6 +9,7 @@ interface OwnershipVerificationProps {
   expiresAt: Date
   onVerify: () => Promise<{ success: boolean; verified: boolean; error?: string }>
   onClose: () => void
+  isVerifying?: boolean
 }
 
 export default function OwnershipVerification({
@@ -17,6 +18,7 @@ export default function OwnershipVerification({
   expiresAt,
   onVerify,
   onClose,
+  isVerifying: externalIsVerifying,
 }: OwnershipVerificationProps) {
   const [copied, setCopied] = useState(false)
   const [verifying, setVerifying] = useState(false)
@@ -51,6 +53,8 @@ export default function OwnershipVerification({
       setVerifying(false)
     }
   }
+
+  const isVerifying = externalIsVerifying || verifying
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
