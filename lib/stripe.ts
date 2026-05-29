@@ -2,10 +2,31 @@ import 'server-only'
 
 import Stripe from 'stripe'
 
-const stripeKey = process.env.STRIPE_SECRET_KEY
+let stripeInstance: Stripe | null = null
 
-if (!stripeKey) {
-  throw new Error('STRIPE_SECRET_KEY is not set')
+function initializeStripe(): Stripe {
+  if (!stripeInstance) {
+    const stripeKey = process.env.STRIPE_SECRET_KEY
+
+    if (!stripeKey) {
+      throw new Error('STRIPE_SECRET_KEY is not set')
+    }
+
+    stripeInstance = new Stripe(stripeKey)
+  }
+
+  return stripeInstance
 }
 
-export const stripe = new Stripe(stripeKey)
+export { initializeStripe }
+
+// Lazy getter for backward compatibility
+export const stripe = new Proxy(
+  {},
+  {
+    get: (_, prop) => {
+      const instance = initializeStripe()
+      return Reflect.get(instance, prop)
+    },
+  }
+) as Stripe
