@@ -17,10 +17,10 @@ async function applyMigration() {
     const client = await pool.connect();
     
     try {
-      const migrationFile = path.join(__dirname, '../migrations/safe_domain_tables.sql');
+      const migrationFile = path.join(__dirname, '../migrations/add_domain_fk_constraints.sql');
       const migrationSQL = fs.readFileSync(migrationFile, 'utf-8');
       
-      console.log('📝 Applying migration: safe_domain_tables.sql');
+      console.log('📝 Applying migration: add_domain_fk_constraints.sql');
       
       // Split by semicolon and filter empty statements
       const statements = migrationSQL
@@ -33,8 +33,8 @@ async function applyMigration() {
         await client.query(statement);
       }
       
-      console.log('✅ Migration applied successfully!');
-      console.log('🎉 Database schema updated with domain tables');
+      console.log('✅ Foreign key constraints added successfully!');
+      console.log('🎉 Database schema is now complete');
     } finally {
       client.release();
     }
