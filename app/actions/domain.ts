@@ -1,79 +1,353 @@
 'use server'
 
 import { db } from '@/lib/db'
-import { userDomain } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
+import { userDomain, domain as domainTable } from '@/lib/db/schema'
+import { eq, and } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
+import { normalizeDomainName } from '@/lib/domain-utils'
+import { getDomainAvailability } from '@/lib/domain-availability'
+import {
+  createVerificationRequest,
+  verifyDomainOwnership,
+  hasVerifiedOwnership,
+  getVerificationStatus,
+} from '@/lib/dns-verification'
 
-export async function savePurchasedDomain({
-  userId,
-  domainName,
-  type,
-  stripeSessionId,
-}: {
-  userId: string
-  domainName: string
-  type: 'buy' | 'lease'
-  stripeSessionId: string
-}) {
+/**
+ * Check if a domain is available for purchase/lease
+ */
+export async function checkDomainAvailability(domainId: string) {
   try {
-    // Check if domain already purchased by this user
-    const existing = await db
+    const result = await db
       .select()
-      .from(userDomain)
-      .where(eq(userDomain.domainName, domainName))
+      .from(domainTable)
+      .where(eq(domainTable.id, domainId))
+      .limit(1)
 
-    if (existing.length > 0) {
+    if (result.length === 0) {
       return {
         success: false,
-        error: 'Domain already owned by someone',
+        available: false,
+        error: 'Domain not found',
       }
     }
 
-    // Save the domain to user account
+    const domain = result[0]
+    
+    if (domain.status !== 'available') {
+      return {
+        success: true,
+        available: false,
+        status: domain.status,
+        error: `Domain is currently ${domain.status}`,
+      }
+    }
+
+    return {
+      success: true,
+      available: true,
+      domain: {
+        id: domain.id,
+        displayName: domain.displayName,
+        buyPrice: domain.buyPrice,
+        leasePrice: domain.leasePrice,
+      },
+    }
+  } catch (error) {
+    console.error('Error checking domain availability:', error)
+    return {
+      success: false,
+      available: false,
+      error: 'Failed to check domain availability',
+    }
+  }
+}
+
+/**
+ * Mark a domain as sold (called from webhook)
+ */
+export async function markDomainAsSold({
+  domainId,
+  buyerId,
+  priceInCents,
+  stripeSessionId,
+}: {
+  domainId: string
+  buyerId: string
+  priceInCents: number
+  stripeSessionId: string
+}) {
+  try {
     const id = randomUUID()
+    
+    // Update domain status to sold
+    await db
+      .update(domainTable)
+      .set({
+        status: 'sold',
+        buyerId,
+        purchasedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(domainTable.id, domainId))
+
+    // Create user domain record
     await db.insert(userDomain).values({
       id,
-      userId,
-      domainName,
-      type,
-      priceInCents: 0, // Will be set from order data if needed
+      userId: buyerId,
+      domainId,
+      type: 'buy',
+      priceInCents,
       stripeSessionId,
       purchasedAt: new Date(),
-      expiresAt: type === 'lease' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null,
       createdAt: new Date(),
       updatedAt: new Date(),
     })
 
     return {
       success: true,
-      domainId: id,
+      userDomainId: id,
     }
   } catch (error) {
-    console.error('Error saving domain:', error)
+    console.error('Error marking domain as sold:', error)
     return {
       success: false,
-      error: 'Failed to save domain',
+      error: 'Failed to mark domain as sold',
     }
   }
 }
 
-export async function getUserDomains(userId: string) {
+/**
+ * Mark a domain as leased (called from webhook)
+ */
+export async function markDomainAsLeased({
+  domainId,
+  leaserId,
+  priceInCents,
+  stripeSessionId,
+}: {
+  domainId: string
+  leaserId: string
+  priceInCents: number
+  stripeSessionId: string
+}) {
+  try {
+    const id = randomUUID()
+    const leaseExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+
+    // Update domain status to leased
+    await db
+      .update(domainTable)
+      .set({
+        status: 'leased',
+        leaserId,
+        leaseStartAt: new Date(),
+        leaseExpiresAt,
+        updatedAt: new Date(),
+      })
+      .where(eq(domainTable.id, domainId))
+
+    // Create user domain record
+    await db.insert(userDomain).values({
+      id,
+      userId: leaserId,
+      domainId,
+      type: 'lease',
+      priceInCents,
+      stripeSessionId,
+      purchasedAt: new Date(),
+      expiresAt: leaseExpiresAt,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    return {
+      success: true,
+      userDomainId: id,
+    }
+  } catch (error) {
+    console.error('Error marking domain as leased:', error)
+    return {
+      success: false,
+      error: 'Failed to mark domain as leased',
+    }
+  }
+}
+
+/**
+ * Get all available domains for marketplace
+ */
+export async function getAvailableDomains() {
   try {
     const domains = await db
       .select()
-      .from(userDomain)
-      .where(eq(userDomain.userId, userId))
+      .from(domainTable)
+      .where(eq(domainTable.status, 'available'))
 
     return {
       success: true,
       domains,
     }
   } catch (error) {
-    console.error('Error fetching domains:', error)
+    console.error('Error fetching available domains:', error)
     return {
       success: false,
-      error: 'Failed to fetch domains',
+      error: 'Failed to fetch available domains',
+    }
+  }
+}
+
+/**
+ * Get user's purchased domains
+ */
+export async function getUserDomains(userId: string) {
+  try {
+    const userDomains = await db
+      .select()
+      .from(userDomain)
+      .where(eq(userDomain.userId, userId))
+
+    return {
+      success: true,
+      domains: userDomains,
+    }
+  } catch (error) {
+    console.error('Error fetching user domains:', error)
+    return {
+      success: false,
+      error: 'Failed to fetch user domains',
+    }
+  }
+}
+
+/**
+ * Check external domain availability and requirements
+ */
+export async function checkExternalDomainStatus(domainName: string) {
+  try {
+    const normalized = normalizeDomainName(domainName)
+
+    // Check external availability
+    const availability = await getDomainAvailability(domainName)
+
+    if (!availability.success) {
+      return {
+        success: false,
+        error: availability.error || 'Failed to check domain availability',
+      }
+    }
+
+    return {
+      success: true,
+      isAvailable: availability.isAvailable,
+      externallyRegistered: availability.externallyRegistered,
+      cached: availability.cached,
+      message: availability.externallyRegistered
+        ? 'This domain is already registered and cannot be listed as available on LeadsWork.'
+        : 'Domain is available for listing',
+    }
+  } catch (error) {
+    console.error('[v0] Error checking external domain status:', error)
+    return {
+      success: false,
+      error: 'Failed to check domain status',
+    }
+  }
+}
+
+/**
+ * Request ownership verification for a domain
+ */
+export async function requestDomainVerification({
+  domainId,
+  userId,
+}: {
+  domainId: string
+  userId: string
+}) {
+  try {
+    const result = await createVerificationRequest({ domainId, userId })
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error,
+      }
+    }
+
+    return {
+      success: true,
+      verificationCode: result.verificationCode,
+      existingVerification: result.existingVerification,
+    }
+  } catch (error) {
+    console.error('[v0] Error requesting verification:', error)
+    return {
+      success: false,
+      error: 'Failed to request verification',
+    }
+  }
+}
+
+/**
+ * Verify domain ownership via DNS record
+ */
+export async function verifyDomainOwnershipAction({
+  domainId,
+  domainName,
+  userId,
+}: {
+  domainId: string
+  domainName: string
+  userId: string
+}) {
+  try {
+    const result = await verifyDomainOwnership({
+      domainId,
+      domainName,
+      userId,
+    })
+
+    return result
+  } catch (error) {
+    console.error('[v0] Error verifying domain ownership:', error)
+    return {
+      success: false,
+      verified: false,
+      error: 'Failed to verify domain ownership',
+    }
+  }
+}
+
+/**
+ * Get domain verification status for a user
+ */
+export async function getDomainVerificationStatus({
+  domainId,
+  userId,
+}: {
+  domainId: string
+  userId: string
+}) {
+  try {
+    const status = await getVerificationStatus({ domainId, userId })
+    const hasVerified = await hasVerifiedOwnership({ domainId, userId })
+
+    return {
+      success: true,
+      status: status.status,
+      verificationCode: status.verificationCode,
+      expiresAt: status.expiresAt,
+      verifiedAt: status.verifiedAt,
+      isVerified: hasVerified,
+    }
+  } catch (error) {
+    console.error('[v0] Error getting verification status:', error)
+    return {
+      success: false,
+      status: 'unverified',
+      isVerified: false,
+      error: 'Failed to get verification status',
     }
   }
 }

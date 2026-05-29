@@ -1,6 +1,6 @@
 import { stripe } from '@/lib/stripe'
 import { db } from '@/lib/db'
-import { userDomain } from '@/lib/db/schema'
+import { userDomain, domain as domainTable } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
@@ -40,43 +40,87 @@ export async function POST(req: NextRequest) {
       console.log('[v0] Payment intent succeeded:', paymentIntent.id)
 
       // Get the metadata that we included when creating the PaymentIntent
-      const { domainName, type } = paymentIntent.metadata as {
-        domainName: string
+      const { domainId, type, userId } = paymentIntent.metadata as {
+        domainId: string
         type: 'buy' | 'lease'
+        userId: string
       }
 
-      if (!domainName || !type) {
-        console.error('[v0] Missing domain metadata in payment intent')
-        return NextResponse.json({ error: 'Missing domain metadata' }, { status: 400 })
+      if (!domainId || !type || !userId) {
+        console.error('[v0] Missing required metadata in payment intent', { domainId, type, userId })
+        return NextResponse.json({ error: 'Missing required metadata' }, { status: 400 })
       }
 
-      // Get the user ID from the PaymentIntent's customer metadata or from the order data
-      // For now, we'll store it based on intent metadata
-      // In a real app, you'd track the user with the PaymentIntent when creating it
-      const userId = paymentIntent.metadata.userId
-
-      if (!userId) {
-        console.error('[v0] Missing user ID in payment intent metadata')
-        return NextResponse.json({ error: 'Missing user ID' }, { status: 400 })
-      }
-
-      // Check if domain already exists
-      const existing = await db
+      // Check if this payment has already been processed (idempotency)
+      const existingUserDomain = await db
         .select()
         .from(userDomain)
-        .where(eq(userDomain.domainName, domainName))
+        .where(eq(userDomain.stripeSessionId, paymentIntent.id))
+        .limit(1)
 
-      if (existing.length > 0) {
-        console.log('[v0] Domain already purchased:', domainName)
-        return NextResponse.json({ success: true, message: 'Domain already exists' })
+      if (existingUserDomain.length > 0) {
+        console.log('[v0] Payment already processed:', paymentIntent.id)
+        return NextResponse.json({ success: true, message: 'Payment already processed' })
       }
 
-      // Save the domain to user account
+      // Get the domain to verify it's available
+      const domainRecord = await db
+        .select()
+        .from(domainTable)
+        .where(eq(domainTable.id, domainId))
+        .limit(1)
+
+      if (domainRecord.length === 0) {
+        console.error('[v0] Domain not found:', domainId)
+        return NextResponse.json({ error: 'Domain not found' }, { status: 400 })
+      }
+
+      const domain = domainRecord[0]
+
+      // If domain is no longer available, log but still create record
+      if (domain.status !== 'available') {
+        console.warn('[v0] Domain is no longer available:', domainId, 'status:', domain.status)
+      }
+
+      // Create user domain record and update domain status
       const id = randomUUID()
+      
+      if (type === 'buy') {
+        // Update domain to sold status
+        await db
+          .update(domainTable)
+          .set({
+            status: 'sold',
+            buyerId: userId,
+            purchasedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(domainTable.id, domainId))
+
+        console.log('[v0] Domain marked as sold:', domainId)
+      } else {
+        // Update domain to leased status
+        const leaseExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        
+        await db
+          .update(domainTable)
+          .set({
+            status: 'leased',
+            leaserId: userId,
+            leaseStartAt: new Date(),
+            leaseExpiresAt,
+            updatedAt: new Date(),
+          })
+          .where(eq(domainTable.id, domainId))
+
+        console.log('[v0] Domain marked as leased:', domainId)
+      }
+
+      // Create user domain record
       await db.insert(userDomain).values({
         id,
         userId,
-        domainName,
+        domainId,
         type,
         priceInCents: paymentIntent.amount,
         stripeSessionId: paymentIntent.id,
@@ -86,8 +130,8 @@ export async function POST(req: NextRequest) {
         updatedAt: new Date(),
       })
 
-      console.log('[v0] Domain saved to user account:', domainName)
-      return NextResponse.json({ success: true, domainId: id })
+      console.log('[v0] User domain record created:', { id, userId, domainId, type })
+      return NextResponse.json({ success: true, userDomainId: id })
     }
 
     return NextResponse.json({ success: true, received: true })

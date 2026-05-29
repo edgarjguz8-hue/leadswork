@@ -2,15 +2,18 @@
 
 import { stripe } from '@/lib/stripe'
 import { auth } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { domain as domainTable } from '@/lib/db/schema'
+import { eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 
 interface DomainCheckoutParams {
-  domainName: string
+  domainId: string
   priceInCents: number
   type: 'buy' | 'lease'
 }
 
-export async function createDomainCheckoutSession({ domainName, priceInCents, type }: DomainCheckoutParams) {
+export async function createDomainCheckoutSession({ domainId, priceInCents, type }: DomainCheckoutParams) {
   const headersList = await headers()
   const session = await auth.api.getSession({
     headers: headersList,
@@ -20,9 +23,26 @@ export async function createDomainCheckoutSession({ domainName, priceInCents, ty
     throw new Error('User not authenticated')
   }
 
+  // Verify domain exists and is available
+  const domainRecord = await db
+    .select()
+    .from(domainTable)
+    .where(eq(domainTable.id, domainId))
+    .limit(1)
+
+  if (domainRecord.length === 0) {
+    throw new Error('Domain not found')
+  }
+
+  const domain = domainRecord[0]
+
+  if (domain.status !== 'available') {
+    throw new Error(`Domain is no longer available (status: ${domain.status})`)
+  }
+
   const description = type === 'buy' 
-    ? `Full ownership of ${domainName}` 
-    : `Monthly lease for ${domainName}`
+    ? `Full ownership of ${domain.displayName}` 
+    : `Monthly lease for ${domain.displayName}`
 
   // Calculate processing fee (2.9% + $0.30)
   const processingFee = Math.round(priceInCents * 0.029 + 30)
@@ -34,7 +54,8 @@ export async function createDomainCheckoutSession({ domainName, priceInCents, ty
     currency: 'usd',
     description: description,
     metadata: {
-      domainName,
+      domainId,
+      domainName: domain.displayName,
       type,
       userId: session.user.id,
     },
@@ -42,6 +63,6 @@ export async function createDomainCheckoutSession({ domainName, priceInCents, ty
 
   return { 
     clientSecret: paymentIntent.client_secret,
-    url: `/checkout?domain=${encodeURIComponent(domainName)}&price=${priceInCents}&type=${type}&secret=${paymentIntent.client_secret}`
+    url: `/checkout?domain=${encodeURIComponent(domainId)}&price=${priceInCents}&type=${type}&secret=${paymentIntent.client_secret}`
   }
 }

@@ -5,6 +5,7 @@ import { X, Shield, CreditCard, Check } from 'lucide-react'
 import { createDomainCheckoutSession } from '@/app/actions/stripe'
 
 interface DomainCheckoutProps {
+  domainId: string
   domainName: string
   priceInCents: number
   type: 'buy' | 'lease'
@@ -12,6 +13,7 @@ interface DomainCheckoutProps {
 }
 
 export default function DomainCheckout({ 
+  domainId,
   domainName, 
   priceInCents, 
   type,
@@ -33,7 +35,7 @@ export default function DomainCheckout({
     
     try {
       const { url } = await createDomainCheckoutSession({ 
-        domainName, 
+        domainId,
         priceInCents, 
         type 
       })
@@ -43,7 +45,8 @@ export default function DomainCheckout({
       }
     } catch (err) {
       console.error('Checkout error:', err)
-      setError('Something went wrong. Please try again.')
+      const errorMessage = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
+      setError(errorMessage)
       setLoading(false)
     }
   }

@@ -1,9 +1,11 @@
-"use client"
+  "use client"
 
-import React, { useMemo, useState } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "@/lib/auth-client"
 import DomainCheckout from "@/components/domain-checkout"
+import OwnershipVerification from "@/components/ownership-verification"
+import SellDomainForm from "@/components/sell-domain-form"
 import {
   Search,
   ArrowRight,
@@ -31,57 +33,25 @@ import {
   LayoutGrid,
 } from "lucide-react"
 import { motion } from "framer-motion"
+import { getAvailableDomainsForMarketplace } from "@/lib/marketplace-data"
+import {
+  checkExternalDomainStatus,
+  requestDomainVerification,
+  verifyDomainOwnershipAction,
+  getDomainVerificationStatus,
+} from "@/app/actions/domain"
 
-const domains = [
-  {
-    name: "BakeryShop.com",
-    price: "$18,000",
-    lease: "$499/mo",
-    category: "Local Business",
-    idea: "A premium name for a bakery, café, catering company, or dessert brand.",
-    score: 94,
-  },
-  {
-    name: "TampaLuxuryCars.com",
-    price: "$12,500",
-    lease: "$349/mo",
-    category: "Automotive",
-    idea: "Built for luxury rentals, dealer leads, exotic car content, or local automotive services.",
-    score: 91,
-  },
-  {
-    name: "AttorneyLeads.com",
-    price: "$25,000",
-    lease: "$799/mo",
-    category: "Legal",
-    idea: "A direct, high-intent domain for legal marketing, attorney referrals, or lead generation.",
-    score: 96,
-  },
-  {
-    name: "FitnessCrew.com",
-    price: "$8,500",
-    lease: "$249/mo",
-    category: "Health & Fitness",
-    idea: "A flexible brand for coaching, training, gym communities, or fitness content.",
-    score: 88,
-  },
-  {
-    name: "HomeRepairPro.com",
-    price: "$15,000",
-    lease: "$399/mo",
-    category: "Home Services",
-    idea: "Strong fit for contractors, repair leads, local service directories, or home improvement brands.",
-    score: 92,
-  },
-  {
-    name: "AIBizTools.com",
-    price: "$9,000",
-    lease: "$299/mo",
-    category: "Business Tools",
-    idea: "Useful for software, business automation, consulting, or an AI tools directory.",
-    score: 89,
-  },
-]
+interface Domain {
+  id: string
+  name: string
+  price: string
+  lease: string
+  category: string
+  idea: string
+  score: number
+  buyPriceInCents: number
+  leasePriceInCents: number
+}
 
 const categories = [
   "All",
@@ -160,15 +130,33 @@ function PageHero({
 function DomainMarketplace() {
   const router = useRouter()
   const { data: session } = useSession()
+  const [domains, setDomains] = useState<Domain[]>([])
+  const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState("")
   const [category, setCategory] = useState("All")
   const [mode, setMode] = useState<"buy" | "lease" | "sell" | null>(null)
   const [showMoreCategories, setShowMoreCategories] = useState(false)
   const [checkoutDomain, setCheckoutDomain] = useState<{
+    id: string
     name: string
     priceInCents: number
     type: 'buy' | 'lease'
   } | null>(null)
+
+  // Load domains from database on mount
+  useEffect(() => {
+    async function loadDomains() {
+      try {
+        const loadedDomains = await getAvailableDomainsForMarketplace()
+        setDomains(loadedDomains)
+      } catch (error) {
+        console.error('Failed to load domains:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadDomains()
+  }, [])
 
   // Helper to parse price string to cents
   const parsePriceToCents = (priceStr: string): number => {
@@ -186,15 +174,16 @@ function DomainMarketplace() {
   }
 
   // Handler for buy/lease checkout
-  const handleCheckout = (domain: typeof domains[0], type: 'buy' | 'lease') => {
+  const handleCheckout = (domain: Domain, type: 'buy' | 'lease') => {
     if (!session?.user) {
       router.push("/sign-in")
       return
     }
-    const priceStr = type === 'buy' ? domain.price : domain.lease
+    const priceInCents = type === 'buy' ? domain.buyPriceInCents : domain.leasePriceInCents
     setCheckoutDomain({
+      id: domain.id,
       name: domain.name,
-      priceInCents: parsePriceToCents(priceStr),
+      priceInCents,
       type
     })
   }
@@ -642,6 +631,7 @@ function DomainMarketplace() {
         {/* Checkout Modal */}
         {checkoutDomain && (
           <DomainCheckout
+            domainId={checkoutDomain.id}
             domainName={checkoutDomain.name}
             priceInCents={checkoutDomain.priceInCents}
             type={checkoutDomain.type}
@@ -788,6 +778,7 @@ function DomainMarketplace() {
         {/* Checkout Modal */}
         {checkoutDomain && (
           <DomainCheckout
+            domainId={checkoutDomain.id}
             domainName={checkoutDomain.name}
             priceInCents={checkoutDomain.priceInCents}
             type={checkoutDomain.type}
@@ -800,82 +791,7 @@ function DomainMarketplace() {
 
   // Sell mode
   return (
-    <>
-      <section className="border-b border-white/10 bg-white/[0.02]">
-        <div className="mx-auto max-w-5xl px-6 py-10">
-          <button
-            onClick={() => setMode(null)}
-            className="mb-6 text-sm text-slate-400 transition hover:text-white"
-          >
-            ← Back to domains
-          </button>
-          <div className="text-center">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-emerald-400">
-              Sell Domains
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              List your domain
-            </h1>
-            <p className="mt-2 text-slate-400">
-              Reach buyers looking for premium domain names
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-xl px-6 py-12">
-        <div className="space-y-5">
-          <div>
-            <label className="mb-2 block text-sm font-medium">Domain name</label>
-            <input
-              placeholder="yourdomain.com"
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/50"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium">Asking price</label>
-            <input
-              placeholder="$10,000"
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/50"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium">Open to leasing?</label>
-            <div className="flex gap-3">
-              <button className="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-medium text-white transition hover:border-emerald-400/30">
-                Yes
-              </button>
-              <button className="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-medium text-white transition hover:border-emerald-400/30">
-                No
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium">Category</label>
-            <select className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none focus:border-emerald-400/50">
-              <option value="">Select category</option>
-              {categories.filter(c => c !== "All").map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium">Description</label>
-            <textarea
-              rows={3}
-              placeholder="Describe the potential of this domain..."
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/50"
-            />
-          </div>
-          <button 
-            onClick={() => handleProtectedAction(() => alert('Submitting listing...'))}
-            className="w-full rounded-xl bg-emerald-400 py-3.5 text-sm font-semibold text-[#0a1220] transition hover:bg-emerald-300"
-          >
-            Submit Listing
-          </button>
-        </div>
-      </section>
-    </>
+    <SellDomainForm onBack={() => setMode(null)} />
   )
 }
 
