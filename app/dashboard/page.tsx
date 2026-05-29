@@ -192,61 +192,64 @@ export default function DashboardPage() {
 
           {/* Purchased Domains Tab */}
           {activeTab === 'purchased' && (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-12 text-center backdrop-blur">
-              <Globe className="mx-auto mb-4 h-12 w-12 text-slate-600" />
-              <p className="text-slate-400">You don't have any domains yet.</p>
-              <Link
-                href="/"
-                className="mt-4 inline-block rounded-lg bg-sky-400 px-6 py-2 font-semibold text-[#0a1220] transition hover:bg-sky-300"
-              >
-                Browse Domains
-              </Link>
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {domains.map((domain) => (
-                <div
-                  key={domain.id}
-                  className="rounded-xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur transition hover:bg-white/[0.06]"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">{domain.domainName}</h3>
-                      <div className="mt-3 flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-2 text-sm text-slate-400">
-                          <Badge className="h-4 w-4 text-sky-400" />
-                          <span className="capitalize">
-                            {domain.type === 'buy' ? 'Owned' : 'Leased'}
-                          </span>
-                        </div>
+            <>
+              {domains.length === 0 ? (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-12 text-center backdrop-blur">
+                  <Globe className="mx-auto mb-4 h-12 w-12 text-slate-600" />
+                  <p className="text-slate-400">You don't have any domains yet.</p>
+                  <Link
+                    href="/"
+                    className="mt-4 inline-block rounded-lg bg-sky-400 px-6 py-2 font-semibold text-[#0a1220] transition hover:bg-sky-300"
+                  >
+                    Browse Domains
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {domains.map((domain) => (
+                    <div
+                      key={domain.id}
+                      className="rounded-xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur transition hover:bg-white/[0.06]"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-white">{domain.domainName}</h3>
+                          <div className="mt-3 flex flex-wrap items-center gap-4">
+                            <div className="flex items-center gap-2 text-sm text-slate-400">
+                              <Badge className="h-4 w-4 text-sky-400" />
+                              <span className="capitalize">
+                                {domain.type === 'buy' ? 'Owned' : 'Leased'}
+                              </span>
+                            </div>
 
-                        <div className="flex items-center gap-2 text-sm text-slate-400">
-                          <Calendar className="h-4 w-4 text-emerald-400" />
-                          <span>Purchased: {formatDate(domain.purchasedAt)}</span>
-                        </div>
+                            <div className="flex items-center gap-2 text-sm text-slate-400">
+                              <Calendar className="h-4 w-4 text-emerald-400" />
+                              <span>Purchased: {formatDate(domain.purchasedAt)}</span>
+                            </div>
 
-                        {domain.type === 'lease' && domain.expiresAt && (
-                          <div className="flex items-center gap-2 text-sm text-slate-400">
-                            <Calendar className="h-4 w-4 text-orange-400" />
-                            <span>Expires: {formatDate(domain.expiresAt)}</span>
+                            {domain.type === 'lease' && domain.expiresAt && (
+                              <div className="flex items-center gap-2 text-sm text-slate-400">
+                                <Calendar className="h-4 w-4 text-orange-400" />
+                                <span>Expires: {formatDate(domain.expiresAt)}</span>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                            Price Paid
+                          </p>
+                          <p className="mt-1 text-xl font-bold text-white">
+                            {formatPrice(domain.priceInCents)}
+                          </p>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="text-right">
-                      <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                        Price Paid
-                      </p>
-                      <p className="mt-1 text-xl font-bold text-white">
-                        {formatPrice(domain.priceInCents)}
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              )}
+            </>
           )}
 
           {/* Selling Domains Tab */}
