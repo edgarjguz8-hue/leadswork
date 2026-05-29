@@ -127,7 +127,8 @@ export default function SellDomainForm({ onBack }: { onBack: () => void }) {
       }
     } catch (err) {
       console.error('[v0] Error submitting listing:', err)
-      setError('An error occurred while submitting your listing. Please try again.')
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+      setError(`Error: ${errorMsg}. Check that the domain database tables exist. Run the setup if needed.`)
     } finally {
       setLoading(false)
     }
@@ -160,7 +161,8 @@ export default function SellDomainForm({ onBack }: { onBack: () => void }) {
       }
     } catch (err) {
       console.error('[v0] Error verifying DNS:', err)
-      setError('Failed to verify DNS records. Please try again.')
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+      setError(`DNS verification error: ${errorMsg}`)
     } finally {
       setVerifyingDNS(false)
     }

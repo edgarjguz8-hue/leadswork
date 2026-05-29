@@ -175,14 +175,19 @@ export async function markDomainAsLeased({
 }
 
 /**
- * Get all available domains for marketplace
+ * Get all available domains for marketplace (only verified, public listings)
  */
 export async function getAvailableDomains() {
   try {
     const domains = await db
       .select()
       .from(domainTable)
-      .where(eq(domainTable.status, 'available'))
+      .where(
+        and(
+          eq(domainTable.status, 'available'),
+          eq(domainTable.verificationStatus, 'verified_owner')
+        )
+      )
 
     return {
       success: true,
@@ -193,7 +198,7 @@ export async function getAvailableDomains() {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return {
       success: false,
-      error: `Failed to fetch available domains: ${errorMessage}`,
+      error: `Failed to fetch available domains: ${errorMessage}. Check that the domain table exists.`,
     }
   }
 }
@@ -401,7 +406,7 @@ export async function submitDomainListing({
     }
 
     // Create domain with pending_verification status
-    const domainId = `domain_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const domainId = randomUUID()
     
     // Score calculation (0-100)
     const score = Math.min(100, Math.floor(Math.random() * 40 + 60))
@@ -447,10 +452,10 @@ export async function submitDomainListing({
     }
   } catch (error) {
     console.error('[v0] Error submitting domain listing:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
     return {
       success: false,
-      error: `Failed to submit domain listing: ${errorMessage}`,
+      error: `Database error: ${errorMsg}. Please ensure the domain table exists and all columns are present.`,
     }
   }
 }
@@ -511,10 +516,11 @@ export async function confirmDomainVerification({
     }
   } catch (error) {
     console.error('[v0] Error confirming domain verification:', error)
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
     return {
       success: false,
       verified: false,
-      error: 'Failed to confirm verification',
+      error: `Failed to confirm verification: ${errorMsg}`,
     }
   }
 }
@@ -551,9 +557,10 @@ export async function getSellerDomains(userId: string) {
     }
   } catch (error) {
     console.error('[v0] Error fetching seller domains:', error)
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
     return {
       success: false,
-      error: 'Failed to fetch seller domains',
+      error: `Failed to fetch seller domains: ${errorMsg}`,
     }
   }
 }
