@@ -386,20 +386,6 @@ export default function DashboardPage() {
   )
 }
 
-export default function DashboardPage() {
-  const router = useRouter()
-  const { data: session, isPending } = useSession()
-  const [domains, setDomains] = useState<UserDomain[]>([])
-  const [sellerDomains, setSellerDomains] = useState<SellerDomain[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'purchased' | 'selling'>('purchased')
-
-  useEffect(() => {
-    if (!isPending) {
-      if (!session?.user) {
-        router.push('/sign-in')
-        return
-      }
 
       const fetchDomains = async () => {
         const purchasedResult = await getUserDomains(session.user.id)
