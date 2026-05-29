@@ -589,3 +589,150 @@ export async function getSellerDomains(userId: string) {
     }
   }
 }
+
+/**
+ * Edit a domain listing (seller can only edit pending domains)
+ */
+export async function editDomainListing({
+  domainId,
+  userId,
+  buyPrice,
+  leasePrice,
+  category,
+  description,
+  isLeasing,
+}: {
+  domainId: string
+  userId: string
+  buyPrice: number
+  leasePrice: number
+  category: string
+  description: string
+  isLeasing: boolean
+}) {
+  try {
+    // Verify ownership and check status
+    const domain = await db
+      .select()
+      .from(domainTable)
+      .where(eq(domainTable.id, domainId))
+      .limit(1)
+
+    if (domain.length === 0) {
+      return {
+        success: false,
+        error: 'Domain not found',
+      }
+    }
+
+    const domainRecord = domain[0]
+
+    if (domainRecord.ownerId !== userId) {
+      return {
+        success: false,
+        error: 'You do not own this domain',
+      }
+    }
+
+    // Only allow editing if status is pending or if verification failed
+    const editableStatuses = ['pending', 'unverified']
+    if (!editableStatuses.includes(domainRecord.status)) {
+      return {
+        success: false,
+        error: `Cannot edit domain with status "${domainRecord.status}". Only pending listings can be edited.`,
+      }
+    }
+
+    const buyPriceInCents = Math.round(buyPrice * 100)
+    const leasePriceInCents = Math.round(leasePrice * 100)
+
+    await db
+      .update(domainTable)
+      .set({
+        buyPrice: buyPriceInCents,
+        leasePrice: leasePriceInCents,
+        category,
+        description,
+        updatedAt: new Date(),
+      })
+      .where(eq(domainTable.id, domainId))
+
+    console.log('[v0] Domain listing updated:', domainId)
+
+    return {
+      success: true,
+      message: 'Domain listing updated successfully',
+    }
+  } catch (error) {
+    console.error('[v0] Error updating domain listing:', error)
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+    return {
+      success: false,
+      error: `Failed to update domain listing: ${errorMsg}`,
+    }
+  }
+}
+
+/**
+ * Delete a domain listing (seller can only delete pending domains)
+ */
+export async function deleteDomainListing({
+  domainId,
+  userId,
+}: {
+  domainId: string
+  userId: string
+}) {
+  try {
+    // Verify ownership and check status
+    const domain = await db
+      .select()
+      .from(domainTable)
+      .where(eq(domainTable.id, domainId))
+      .limit(1)
+
+    if (domain.length === 0) {
+      return {
+        success: false,
+        error: 'Domain not found',
+      }
+    }
+
+    const domainRecord = domain[0]
+
+    if (domainRecord.ownerId !== userId) {
+      return {
+        success: false,
+        error: 'You do not own this domain',
+      }
+    }
+
+    // Only allow deleting if status is pending or unverified
+    const deletableStatuses = ['pending', 'unverified']
+    if (!deletableStatuses.includes(domainRecord.status)) {
+      return {
+        success: false,
+        error: `Cannot delete domain with status "${domainRecord.status}". Only pending listings can be deleted.`,
+      }
+    }
+
+    // Delete the domain and its verification records
+    await db
+      .delete(domainTable)
+      .where(eq(domainTable.id, domainId))
+
+    console.log('[v0] Domain listing deleted:', domainId)
+
+    return {
+      success: true,
+      message: 'Domain listing deleted successfully',
+    }
+  } catch (error) {
+    console.error('[v0] Error deleting domain listing:', error)
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+    return {
+      success: false,
+      error: `Failed to delete domain listing: ${errorMsg}`,
+    }
+  }
+}
