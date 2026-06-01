@@ -897,32 +897,6 @@ function LaunchServices() {
         </div>
       </section>
 
-      {/* Hero Section */}
-      <PageHero
-        eyebrow="Business Launch"
-        title="Create your business from start to finish"
-        subtitle="We've distilled decades of entrepreneurial knowledge into a clear, structured system that takes you from idea to operating business in 7 days."
-      >
-        <div className="mt-10 flex flex-wrap gap-3">
-          <button
-            onClick={handleGetStarted}
-            className="inline-flex items-center rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] transition hover:bg-sky-300"
-          >
-            Start Your Launch
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </button>
-          <button
-            onClick={() => {
-              // Scroll to learn more section
-              document.getElementById("learn-more")?.scrollIntoView({ behavior: "smooth" })
-            }}
-            className="inline-flex items-center rounded-lg border border-white/30 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/5"
-          >
-            Learn More
-          </button>
-        </div>
-      </PageHero>
-
       {/* 5 Steps Section */}
       <section className="mx-auto max-w-5xl px-6 py-20">
         <div className="mb-16 text-center">
@@ -1034,73 +1008,20 @@ function LaunchServices() {
         </div>
       </section>
 
-      {/* Why LaunchWorks Section */}
+      {/* Final CTA Section */}
       <section className="border-t border-white/10 px-6 py-20">
-        <div className="mx-auto max-w-5xl">
-          <div className="grid gap-12 lg:grid-cols-2">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">
-                Why Choose LeadsWork Launch
-              </p>
-              <h2 className="mt-3 text-3xl font-semibold leading-tight">
-                Stop Spinning Your Wheels
-              </h2>
-              <p className="mt-4 text-slate-400">
-                Most entrepreneurs fail because they're overwhelmed with options and don't know what to do next. LeadsWork Launch eliminates the guesswork with a proven system designed by founders who've been there.
-              </p>
-
-              <div className="mt-8 space-y-4">
-                {[
-                  "Structured roadmap that actually works",
-                  "Real-time progress tracking and milestones",
-                  "Expert guidance and community support",
-                  "Templates and resources at every step",
-                  "Connect with your first customers",
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-3">
-                    <Check className="h-5 w-5 flex-shrink-0 text-sky-400 mt-0.5" />
-                    <p className="text-slate-300">{item}</p>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={handleGetStarted}
-                className="mt-8 inline-flex items-center rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] transition hover:bg-sky-300"
-              >
-                Start Your Launch Today
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur">
-                <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">
-                  Key Stats
-                </p>
-                <div className="mt-6 space-y-4">
-                  <div>
-                    <p className="text-3xl font-bold text-sky-400">7 Days</p>
-                    <p className="mt-1 text-sm text-slate-400">Average time to launch</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold text-sky-400">5 Steps</p>
-                    <p className="mt-1 text-sm text-slate-400">Proven launch system</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold text-sky-400">1000+</p>
-                    <p className="mt-1 text-sm text-slate-400">Entrepreneurs launched</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-sky-400/10 to-sky-400/5 p-8 backdrop-blur">
-                <p className="font-semibold text-white">
-                  "LeadsWork's launch system gave me the clarity and structure I needed. I went from idea to first sale in less than a week."
-                </p>
-                <p className="mt-4 text-sm text-sky-300">— Jessica Chen, Founder</p>
-              </div>
-            </div>
+        <div className="mx-auto max-w-5xl text-center">
+          <h2 className="text-3xl font-semibold leading-tight md:text-4xl">
+            Start your business journey
+          </h2>
+          <div className="mt-8">
+            <button
+              onClick={handleGetStarted}
+              className="inline-flex items-center rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] transition hover:bg-sky-300"
+            >
+              Get Started
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </button>
           </div>
         </div>
       </section>
