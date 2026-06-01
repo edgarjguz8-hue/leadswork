@@ -119,3 +119,20 @@ export const userDomain = pgTable('userDomain', {
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 })
+
+export const businessLaunch = pgTable('businessLaunch', {
+  id: text('id').primaryKey(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description'),
+  businessType: text('businessType'),
+  industry: text('industry'),
+  location: text('location'),
+  completedSteps: text('completedSteps').notNull().default('[]'), // JSON array of completed step IDs
+  progress: integer('progress').notNull().default(0), // 0-100
+  status: text('status').notNull().default('in_progress'), // in_progress, launched, paused
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+})
