@@ -31,6 +31,8 @@ import {
   LogOut,
   User,
   LayoutGrid,
+  Wrench,
+  Check,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { getAvailableDomainsForMarketplace } from "@/lib/marketplace-data"
@@ -797,80 +799,282 @@ function DomainMarketplace() {
 }
 
 function LaunchServices() {
-  const stages = [
-    "IDEA",
-    "BRAND",
-    "FORM",
-    "BUILD",
-    "MARKET",
-    "CONNECT",
-    "OPERATE",
-    "SCALE",
+  const router = useRouter()
+  const { data: session } = useSession()
+
+  const launchSteps = [
+    {
+      number: "01",
+      title: "Define Your Idea",
+      description: "Clarify your business concept, target market, and value proposition with our guided worksheets.",
+      icon: Target,
+    },
+    {
+      number: "02",
+      title: "Set Up Your Brand",
+      description: "Create a professional brand identity, website, and online presence in just hours.",
+      icon: Sparkles,
+    },
+    {
+      number: "03",
+      title: "Build Systems",
+      description: "Establish operational systems, workflows, and tools to run your business efficiently.",
+      icon: Wrench,
+    },
+    {
+      number: "04",
+      title: "Find Your Customers",
+      description: "Execute proven marketing strategies and reach your ideal customers where they are.",
+      icon: Users,
+    },
+    {
+      number: "05",
+      title: "Launch & Scale",
+      description: "Go live with confidence and grow with ongoing support, resources, and community.",
+      icon: TrendingUp,
+    },
   ]
+
+  const platformFeatures = [
+    {
+      title: "Guided Roadmap",
+      description: "Our step-by-step system eliminates guesswork and keeps you on track from day one.",
+      icon: Layers,
+    },
+    {
+      title: "Progress Tracking",
+      description: "Visual dashboard shows exactly where you are and what's next in your launch journey.",
+      icon: LayoutGrid,
+    },
+    {
+      title: "Resource Library",
+      description: "Templates, guides, and tools built specifically for new entrepreneurs launching businesses.",
+      icon: Sparkles,
+    },
+    {
+      title: "Expert Support",
+      description: "Access to mentors, consultants, and the LeadsWork community whenever you need guidance.",
+      icon: Users,
+    },
+  ]
+
+  const handleGetStarted = () => {
+    if (session?.user) {
+      router.push("/dashboard/launch")
+    } else {
+      router.push("/sign-up")
+    }
+  }
 
   return (
     <>
+      {/* Hero Section */}
       <PageHero
-        eyebrow="Launch"
-        title="From idea to operating business."
-        subtitle="A step-by-step launch system designed to help entrepreneurs build and grow with structure, guidance, and momentum."
+        eyebrow="Business Launch"
+        title="Create your business from start to finish"
+        subtitle="We've distilled decades of entrepreneurial knowledge into a clear, structured system that takes you from idea to operating business in 7 days."
       >
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Badge>Step-by-Step Launch</Badge>
-          <Badge>Progress Tracking</Badge>
-          <Badge>Business Builder</Badge>
-        </div>
-
-        <div className="mt-10">
-          <button className="inline-flex items-center rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] transition hover:bg-sky-300">
-            Get Started
+        <div className="mt-10 flex flex-wrap gap-3">
+          <button
+            onClick={handleGetStarted}
+            className="inline-flex items-center rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] transition hover:bg-sky-300"
+          >
+            Start Your Launch
             <ArrowRight className="ml-2 h-4 w-4" />
+          </button>
+          <button
+            onClick={() => {
+              // Scroll to learn more section
+              document.getElementById("learn-more")?.scrollIntoView({ behavior: "smooth" })
+            }}
+            className="inline-flex items-center rounded-lg border border-white/30 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/5"
+          >
+            Learn More
           </button>
         </div>
       </PageHero>
 
-      <section className="mx-auto max-w-5xl px-6 pb-20">
-        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-          {stages.map((item, index) => (
-            <div
-              key={item}
-              className="rounded-xl border border-white/10 bg-white/[0.03] p-5 text-center transition hover:border-sky-400/30"
-            >
-              <p className="text-xs font-medium text-sky-400">
-                Step {index + 1}
-              </p>
-              <h3 className="mt-2 text-xl font-semibold text-white">
-                {item}
-              </h3>
-            </div>
-          ))}
+      {/* 5 Steps Section */}
+      <section className="mx-auto max-w-5xl px-6 py-20">
+        <div className="mb-16 text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">
+            5-Step Process
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold leading-tight md:text-4xl">
+            Your Launch Path, Simplified
+          </h2>
+          <p className="mt-4 mx-auto max-w-2xl text-slate-400">
+            Each step is designed to build momentum. Complete one section, unlock the next, and watch your business come to life.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
+          {launchSteps.map((step, index) => {
+            const Icon = step.icon
+            return (
+              <motion.div
+                key={step.number}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+                viewport={{ once: true }}
+                className="group rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur transition hover:border-sky-400/30 hover:bg-white/[0.06]"
+              >
+                <div className="flex items-start gap-6">
+                  <div className="flex-shrink-0">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-sky-400/10 group-hover:bg-sky-400/20 transition">
+                      <Icon className="h-6 w-6 text-sky-400" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-sky-400">Step {step.number}</p>
+                    <h3 className="mt-2 text-xl font-semibold text-white">
+                      {step.title}
+                    </h3>
+                    <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )
+          })}
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-6 pb-24">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-8">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-sky-400">
-              The Launch System
+      {/* Dashboard Preview Section */}
+      <section className="border-y border-white/10 bg-white/[0.02] px-6 py-20">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-16 text-center">
+            <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">
+              Your Command Center
             </p>
-            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
-              Everything needed to launch a business — organized into one system.
+            <h2 className="mt-3 text-3xl font-semibold leading-tight md:text-4xl">
+              See Your Progress Every Step of the Way
             </h2>
-            <p className="mt-4 leading-relaxed text-slate-400">
-              LeadsWork helps entrepreneurs move from idea to launch with a
-              clear roadmap, startup guidance, tools, partnerships, and growth
-              support.
+            <p className="mt-4 mx-auto max-w-2xl text-slate-400">
+              Our intuitive dashboard gives you a complete overview of your launch progress with actionable next steps.
             </p>
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-8">
-            <h3 className="text-2xl font-semibold tracking-tight">
-              Most entrepreneurs fail because they get lost in the process.
-            </h3>
-            <p className="mt-4 leading-relaxed text-slate-400">
-              LeadsWork provides structure, direction, and momentum so
-              entrepreneurs always know what to do next.
-            </p>
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-1 backdrop-blur overflow-hidden">
+            <div className="rounded-xl bg-[#0a1220] border border-white/10 aspect-video flex items-center justify-center">
+              <div className="text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-sky-400/10 mx-auto mb-4">
+                  <Rocket className="h-8 w-8 text-sky-400" />
+                </div>
+                <p className="text-sm text-slate-400">Dashboard preview coming soon</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Features Section */}
+      <section id="learn-more" className="mx-auto max-w-5xl px-6 py-20">
+        <div className="mb-16 text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">
+            Platform Features
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold leading-tight md:text-4xl">
+            Everything You Need to Launch Successfully
+          </h2>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {platformFeatures.map((feature, index) => {
+            const Icon = feature.icon
+            return (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+                viewport={{ once: true }}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur transition hover:border-sky-400/30 hover:bg-white/[0.06]"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-400/10">
+                  <Icon className="h-6 w-6 text-sky-400" />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-white">
+                  {feature.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                  {feature.description}
+                </p>
+              </motion.div>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* Why LaunchWorks Section */}
+      <section className="border-t border-white/10 px-6 py-20">
+        <div className="mx-auto max-w-5xl">
+          <div className="grid gap-12 lg:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">
+                Why Choose LeadsWork Launch
+              </p>
+              <h2 className="mt-3 text-3xl font-semibold leading-tight">
+                Stop Spinning Your Wheels
+              </h2>
+              <p className="mt-4 text-slate-400">
+                Most entrepreneurs fail because they're overwhelmed with options and don't know what to do next. LeadsWork Launch eliminates the guesswork with a proven system designed by founders who've been there.
+              </p>
+
+              <div className="mt-8 space-y-4">
+                {[
+                  "Structured roadmap that actually works",
+                  "Real-time progress tracking and milestones",
+                  "Expert guidance and community support",
+                  "Templates and resources at every step",
+                  "Connect with your first customers",
+                ].map((item) => (
+                  <div key={item} className="flex items-start gap-3">
+                    <Check className="h-5 w-5 flex-shrink-0 text-sky-400 mt-0.5" />
+                    <p className="text-slate-300">{item}</p>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={handleGetStarted}
+                className="mt-8 inline-flex items-center rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] transition hover:bg-sky-300"
+              >
+                Start Your Launch Today
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">
+                  Key Stats
+                </p>
+                <div className="mt-6 space-y-4">
+                  <div>
+                    <p className="text-3xl font-bold text-sky-400">7 Days</p>
+                    <p className="mt-1 text-sm text-slate-400">Average time to launch</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-sky-400">5 Steps</p>
+                    <p className="mt-1 text-sm text-slate-400">Proven launch system</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-sky-400">1000+</p>
+                    <p className="mt-1 text-sm text-slate-400">Entrepreneurs launched</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-sky-400/10 to-sky-400/5 p-8 backdrop-blur">
+                <p className="font-semibold text-white">
+                  "LeadsWork's launch system gave me the clarity and structure I needed. I went from idea to first sale in less than a week."
+                </p>
+                <p className="mt-4 text-sm text-sky-300">— Jessica Chen, Founder</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1466,10 +1670,7 @@ export default function LeadsWorkWebsite() {
   
   const renderPage = () => {
     if (page === "marketplace") return <DomainMarketplace />
-    if (page === "launch") {
-      router.push("/launch")
-      return null
-    }
+    if (page === "launch") return <LaunchServices />
     if (page === "tools") return <ConnectNetwork />
     if (page === "membership") return <Membership />
     return <HomePage setPage={setPage} />
