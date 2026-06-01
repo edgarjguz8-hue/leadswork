@@ -869,159 +869,133 @@ function LaunchServices() {
   return (
     <>
       {/* Homepage Section */}
-      <section className="relative flex min-h-screen items-center justify-center px-6">
-        <div className="text-center max-w-3xl">
-          <h1 className="text-5xl font-bold leading-tight md:text-6xl lg:text-7xl">
+      <section className="flex flex-1 flex-col items-center justify-center px-6 py-16">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-2xl text-center"
+        >
+          <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
             Launch your business
           </h1>
-          <p className="mt-6 text-xl text-slate-400 md:text-2xl">
+          <p className="mx-auto mt-4 max-w-md text-slate-400">
             Turn your idea into a thriving business with our proven 7-day launch system. Get a clear roadmap, expert guidance, and everything you need to succeed.
           </p>
-          <div className="mt-12 flex flex-wrap gap-4 justify-center">
+          <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
             <button
               onClick={handleGetStarted}
-              className="inline-flex items-center rounded-lg bg-sky-400 px-8 py-4 text-base font-semibold text-[#0a1220] transition hover:bg-sky-300"
+              className="rounded-lg bg-sky-400 px-8 py-3.5 text-sm font-medium text-[#0a1220] transition hover:bg-sky-300"
             >
               Start Your Launch
-              <ArrowRight className="ml-2 h-5 w-5" />
             </button>
             <button
               onClick={() => {
                 document.getElementById("learn-more")?.scrollIntoView({ behavior: "smooth" })
               }}
-              className="inline-flex items-center rounded-lg border border-white/30 px-8 py-4 text-base font-semibold text-white transition hover:bg-white/5"
+              className="rounded-lg border border-white/10 bg-white/[0.03] px-8 py-3.5 text-sm font-medium text-white transition hover:bg-white/[0.06]"
             >
               Learn More
             </button>
           </div>
-        </div>
+        </motion.div>
       </section>
 
-      {/* 5 Steps Section */}
-      <section className="mx-auto max-w-5xl px-6 py-20">
-        <div className="mb-16 text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">
-            5-Step Process
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold leading-tight md:text-4xl">
-            Your Launch Path, Simplified
-          </h2>
-          <p className="mt-4 mx-auto max-w-2xl text-slate-400">
-            Each step is designed to build momentum. Complete one section, unlock the next, and watch your business come to life.
-          </p>
-        </div>
+      {/* Dashboard Section */}
+      <section id="learn-more" className="border-y border-white/10 bg-white/[0.02] px-6 py-12">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">
+              Launch System
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">
+              Business Launch
+            </h2>
+          </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
-          {launchSteps.map((step, index) => {
-            const Icon = step.icon
-            return (
-              <motion.div
-                key={step.number}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
-                viewport={{ once: true }}
-                className="group rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur transition hover:border-sky-400/30 hover:bg-white/[0.06]"
-              >
-                <div className="flex items-start gap-6">
-                  <div className="flex-shrink-0">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-sky-400/10 group-hover:bg-sky-400/20 transition">
-                      <Icon className="h-6 w-6 text-sky-400" />
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur">
+            <div className="grid gap-8 lg:grid-cols-3">
+              {/* Left Column - Progress & Overview */}
+              <div className="lg:col-span-1">
+                <div className="space-y-6">
+                  {/* Completion Percentage */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">
+                      Project Completion
+                    </p>
+                    <div className="flex items-end gap-4">
+                      <div>
+                        <p className="text-4xl font-bold text-sky-400">45%</p>
+                      </div>
+                      <div className="flex-1">
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                          <div
+                            className="h-full bg-sky-400 transition-all duration-500"
+                            style={{ width: "45%" }}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-sky-400">Step {step.number}</p>
-                    <h3 className="mt-2 text-xl font-semibold text-white">
-                      {step.title}
-                    </h3>
-                    <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                      {step.description}
+
+                  {/* Next Steps */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">
+                      What's Next
                     </p>
+                    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+                      <p className="text-sm font-medium text-white">Set Up Brand & Website</p>
+                      <p className="mt-2 text-xs text-slate-400">
+                        Create your brand identity and establish your online presence
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Business Overview */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">
+                      Business Overview
+                    </p>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <p className="text-slate-400">Business Type</p>
+                        <p className="font-medium text-white">Tech Startup</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-400">Industry</p>
+                        <p className="font-medium text-white">SaaS</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </motion.div>
-            )
-          })}
-        </div>
-      </section>
+              </div>
 
-      {/* Dashboard Preview Section */}
-      <section className="border-y border-white/10 bg-white/[0.02] px-6 py-20">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-16 text-center">
-            <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">
-              Your Command Center
-            </p>
-            <h2 className="mt-3 text-3xl font-semibold leading-tight md:text-4xl">
-              See Your Progress Every Step of the Way
-            </h2>
-            <p className="mt-4 mx-auto max-w-2xl text-slate-400">
-              Our intuitive dashboard gives you a complete overview of your launch progress with actionable next steps.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-1 backdrop-blur overflow-hidden">
-            <img
-              src="/dashboard-mockup.png"
-              alt="LeadsWork Launch Dashboard"
-              className="rounded-xl w-full aspect-video object-cover"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Platform Features Section */}
-      <section id="learn-more" className="mx-auto max-w-5xl px-6 py-20">
-        <div className="mb-16 text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">
-            Platform Features
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold leading-tight md:text-4xl">
-            Everything You Need to Launch Successfully
-          </h2>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          {platformFeatures.map((feature, index) => {
-            const Icon = feature.icon
-            return (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
-                viewport={{ once: true }}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur transition hover:border-sky-400/30 hover:bg-white/[0.06]"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-400/10">
-                  <Icon className="h-6 w-6 text-sky-400" />
+              {/* Right Column - Steps */}
+              <div className="lg:col-span-2">
+                <div className="space-y-3">
+                  {launchSteps.map((step, index) => (
+                    <motion.div
+                      key={step.number}
+                      initial={{ opacity: 0, x: 16 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      viewport={{ once: true }}
+                      className="rounded-lg border border-white/10 bg-white/[0.03] p-4 hover:border-sky-400/30 transition cursor-pointer hover:bg-white/[0.06]"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-400/10 flex-shrink-0 mt-1">
+                          <p className="text-xs font-bold text-sky-400">{step.number}</p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-white">{step.title}</p>
+                          <p className="text-sm text-slate-400 mt-1">{step.description}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-white">
-                  {feature.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                  {feature.description}
-                </p>
-              </motion.div>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* Final CTA Section */}
-      <section className="border-t border-white/10 px-6 py-20">
-        <div className="mx-auto max-w-5xl text-center">
-          <h2 className="text-3xl font-semibold leading-tight md:text-4xl">
-            Start your business journey
-          </h2>
-          <div className="mt-8">
-            <button
-              onClick={handleGetStarted}
-              className="inline-flex items-center rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] transition hover:bg-sky-300"
-            >
-              Get Started
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
