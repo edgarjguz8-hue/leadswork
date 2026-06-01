@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useSession, signOut } from '@/lib/auth-client'
 import { getSellerDomains } from '@/app/actions/domain'
 import DomainListingDetail from '@/components/domain-listing-detail'
-import { LogOut, Globe, Loader2, ArrowLeft, Check, Clock, AlertCircle, Plus } from 'lucide-react'
+import { LogOut, Globe, Loader2, ArrowLeft, Check, Clock, AlertCircle, Plus, Rocket, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 
 interface SellerDomain {
   id: string
@@ -20,10 +21,22 @@ interface SellerDomain {
   verificationCode?: string
 }
 
+interface BusinessLaunch {
+  id: string
+  name: string
+  description?: string
+  businessType?: string
+  progress: number
+  status: string
+  createdAt: string
+  updatedAt: string
+}
+
 export default function DashboardClient() {
   const router = useRouter()
   const { data: session, isPending } = useSession()
   const [sellerDomains, setSellerDomains] = useState<SellerDomain[]>([])
+  const [businessLaunches, setBusinessLaunches] = useState<BusinessLaunch[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedDomain, setSelectedDomain] = useState<SellerDomain | null>(null)
 
@@ -39,6 +52,31 @@ export default function DashboardClient() {
         if (result.success) {
           setSellerDomains(result.domains || [])
         }
+        
+        // Add mock business launches for demonstration
+        setBusinessLaunches([
+          {
+            id: '1',
+            name: 'TechFlow Consulting',
+            description: 'Building a tech consulting startup from scratch',
+            businessType: 'Service',
+            progress: 40,
+            status: 'in_progress',
+            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          {
+            id: '2',
+            name: 'Local Fitness Studio',
+            description: 'Launching a fitness studio in downtown area',
+            businessType: 'Fitness',
+            progress: 60,
+            status: 'in_progress',
+            createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ])
+        
         setLoading(false)
       }
 
@@ -230,6 +268,88 @@ export default function DashboardClient() {
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Business Launches Section */}
+        <section className="mt-12">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-400/10">
+                <Rocket className="h-5 w-5 text-sky-400" />
+              </div>
+              <h2 className="text-xl font-semibold text-white">Business Launches ({businessLaunches.length})</h2>
+            </div>
+            <Link
+              href="/dashboard/launch"
+              className="flex items-center gap-2 rounded-lg bg-sky-400 px-4 py-2 text-sm font-semibold text-[#0a1220] transition hover:bg-sky-300"
+            >
+              <Plus className="h-4 w-4" />
+              New Launch
+            </Link>
+          </div>
+
+          {businessLaunches.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-12 text-center backdrop-blur">
+              <Rocket className="mx-auto mb-4 h-12 w-12 text-slate-600" />
+              <p className="text-slate-400">You haven't started any business launches yet.</p>
+              <Link
+                href="/dashboard/launch"
+                className="mt-4 inline-block rounded-lg bg-sky-400 px-6 py-2 font-semibold text-[#0a1220] transition hover:bg-sky-300"
+              >
+                Start Your First Launch
+              </Link>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {businessLaunches.map((launch, index) => (
+                <motion.div
+                  key={launch.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => router.push(`/dashboard/launch?id=${launch.id}`)}
+                  className="group cursor-pointer rounded-xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur transition hover:bg-white/[0.06] hover:border-sky-400/30"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-400/10">
+                      <Rocket className="h-5 w-5 text-sky-400" />
+                    </div>
+                    <span className={`text-xs font-medium rounded-full px-2 py-1 ${
+                      launch.status === 'in_progress' ? 'bg-sky-400/20 text-sky-300' :
+                      launch.status === 'launched' ? 'bg-emerald-400/20 text-emerald-300' :
+                      'bg-slate-400/20 text-slate-300'
+                    }`}>
+                      {launch.status === 'in_progress' ? 'In Progress' : 
+                       launch.status === 'launched' ? 'Launched' : 'Paused'}
+                    </span>
+                  </div>
+                  
+                  <h3 className="text-lg font-semibold text-white">{launch.name}</h3>
+                  {launch.description && (
+                    <p className="mt-2 text-sm text-slate-400 line-clamp-2">{launch.description}</p>
+                  )}
+                  
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">Progress</span>
+                      <span className="text-sm font-semibold text-sky-400">{launch.progress}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full bg-sky-400 transition-all duration-500"
+                        style={{ width: `${launch.progress}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between opacity-0 group-hover:opacity-100 transition">
+                    <span className="text-xs text-slate-400">View details</span>
+                    <ChevronRight className="h-4 w-4 text-sky-400" />
+                  </div>
+                </motion.div>
               ))}
             </div>
           )}

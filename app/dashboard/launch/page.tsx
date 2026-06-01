@@ -1,29 +1,22 @@
 'use client'
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useSession, signOut } from "@/lib/auth-client"
 import {
+  ArrowLeft,
+  LogOut,
   Rocket,
-  Globe,
-  Users,
-  MessageCircle,
-  BriefcaseBusiness,
-  BookOpen,
-  CreditCard,
-  Settings,
-  Droplet,
-  Mail,
   Monitor,
-  Megaphone,
-  Check,
-  ChevronRight,
-  MapPin,
-  CalendarDays,
-  Pencil,
-  Headphones,
   Wrench,
   Target,
-  TrendingUp,
-} from "lucide-react";
+  BriefcaseBusiness,
+  Check,
+  ChevronRight,
+  Layers,
+  Plus,
+} from "lucide-react"
+import { motion } from "framer-motion"
 
 const launchSteps = [
   {
@@ -96,254 +89,250 @@ const launchSteps = [
       "Growth plan",
     ],
   },
-];
+]
 
-const navItems = [
-  { label: "Launch", icon: Rocket, active: true },
-  { label: "Domains", icon: Globe },
-  { label: "Connections", icon: Users },
-  { label: "Messages", icon: MessageCircle },
-  { label: "My Business", icon: BriefcaseBusiness },
-  { label: "Resources", icon: BookOpen },
-  { label: "Billing", icon: CreditCard },
-  { label: "Settings", icon: Settings },
-];
+export default function LaunchDashboard() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { data: session, isPending } = useSession()
+  const [completedSteps, setCompletedSteps] = useState<number[]>([1])
+  const [selectedStep, setSelectedStep] = useState<number | null>(null)
+  const [launchData, setLaunchData] = useState({
+    id: searchParams.get('id') || 'new-launch',
+    name: 'My Business Launch',
+    description: 'Building my business from idea to operation',
+  })
 
-const quickActions = [
-  { title: "Find Domains", description: "Search available domain names.", icon: Globe },
-  { title: "Browse Connections", description: "Find experts, vendors, and opportunities.", icon: Users },
-  { title: "Open Messages", description: "View your conversations.", icon: MessageCircle },
-  { title: "Use Resources", description: "Guides, templates, and tools.", icon: BookOpen },
-];
+  // Show loading while checking session
+  if (isPending) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0a1220]">
+        <div className="text-center">
+          <p className="text-slate-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    Completed: "bg-emerald-500/15 text-emerald-300 border-emerald-500/20",
-    "In Progress": "bg-blue-500/15 text-blue-300 border-blue-500/20",
-    "Not Started": "bg-slate-500/15 text-slate-300 border-slate-500/20",
-  };
+  // Redirect if not authenticated
+  if (!session?.user) {
+    router.push("/sign-in")
+    return null
+  }
 
-  return (
-    <span className={`rounded-lg border px-3 py-1 text-xs font-medium ${styles[status]}`}>
-      {status}
-    </span>
-  );
-}
+  const handleSignOut = async () => {
+    await signOut()
+    router.push("/")
+  }
 
-export default function LeadsWorkLaunchDashboard() {
-  const [steps, setSteps] = useState(launchSteps);
-  const [selectedStep, setSelectedStep] = useState(steps[1]);
+  const toggleStepComplete = (stepId: number) => {
+    setCompletedSteps((prev) =>
+      prev.includes(stepId) ? prev.filter((id) => id !== stepId) : [...prev, stepId]
+    )
+  }
 
-  const completedCount = useMemo(
-    () => steps.filter((step) => step.status === "Completed").length,
-    [steps]
-  );
-
-  const progress = Math.round((completedCount / steps.length) * 100);
-
-  const markSelectedComplete = () => {
-    setSteps((current) =>
-      current.map((step) =>
-        step.id === selectedStep.id ? { ...step, status: "Completed" } : step
-      )
-    );
-    setSelectedStep((current) => ({ ...current, status: "Completed" }));
-  };
+  const completedCount = completedSteps.length
+  const totalSteps = launchSteps.length
+  const progressPercent = (completedCount / totalSteps) * 100
 
   return (
-    <div className="min-h-screen bg-[#020b17] text-white">
-      <div className="flex min-h-screen">
-        <aside className="hidden w-72 border-r border-white/10 bg-[#031120] p-6 lg:flex lg:flex-col">
-          <div className="mb-10 text-2xl font-bold tracking-tight">
-            LEADS<span className="text-blue-400">WORK</span>
+    <div className="min-h-screen bg-[#0a1220] text-white">
+      {/* Header */}
+      <header className="sticky top-0 z-20 border-b border-white/10 bg-[#0a1220]/95 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+          <button
+            onClick={() => router.push("/")}
+            className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm font-medium text-white transition hover:bg-white/5"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back Home
+          </button>
+
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-400 text-[#0a1220]">
+              <Layers className="h-4 w-4" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight">
+              LeadsWork
+            </span>
           </div>
 
-          <nav className="space-y-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.label}
-                  className={`flex w-full items-center gap-4 rounded-xl px-4 py-4 text-left transition ${
-                    item.active
-                      ? "border border-blue-400/20 bg-blue-500/15 text-blue-300"
-                      : "text-slate-300 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <Icon size={20} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/5"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Sign Out</span>
+          </button>
+        </div>
+      </header>
 
-          <div className="mt-auto rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/15 text-blue-300">
-              <Headphones size={24} />
-            </div>
-            <h3 className="font-semibold">Need Help?</h3>
-            <p className="mt-1 text-sm text-slate-400">Our team is here for you.</p>
-            <button className="mt-4 w-full rounded-lg border border-blue-400/50 px-4 py-2 text-sm text-blue-300 hover:bg-blue-500/10">
-              Chat with Support
-            </button>
+      {/* Main Content */}
+      <main className="mx-auto max-w-5xl px-6 py-12">
+        {/* Welcome Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-12"
+        >
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-sky-400">
+            Launch System
+          </p>
+          <h1 className="text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
+            Build Your Business
+          </h1>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-400">
+            Follow our guided system to launch your business from idea to operation in 7 days.
+          </p>
+        </motion.div>
+
+        {/* Progress Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="mb-12 rounded-2xl border border-white/10 bg-white/[0.03] p-6"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Your Progress</h2>
+            <span className="text-sm font-medium text-sky-400">
+              {completedCount} of {totalSteps} completed
+            </span>
           </div>
-        </aside>
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercent}%` }}
+              transition={{ duration: 0.5 }}
+              className="h-full bg-sky-400"
+            />
+          </div>
+        </motion.div>
 
-        <main className="flex-1 px-5 py-8 md:px-10 lg:px-12">
-          <header className="mb-8 flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Welcome back, John 👋</h1>
-              <p className="mt-2 text-slate-300">Your launch dashboard is simple: complete any section and keep moving.</p>
-            </div>
-            <div className="hidden items-center gap-3 md:flex">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700 font-semibold">JD</div>
-              <span>John D.</span>
-            </div>
-          </header>
+        {/* Launch Steps Grid */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
+          {launchSteps.map((step, index) => {
+            const isCompleted = completedSteps.includes(step.id)
+            const StepIcon = step.icon
 
-          <section className="rounded-2xl border border-white/10 bg-[#061529] p-6 shadow-2xl shadow-blue-950/20 md:p-8">
-            <div className="grid gap-8 md:grid-cols-2">
-              <div className="flex gap-5">
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-blue-500/15 text-blue-300">
-                  <Droplet size={44} />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-400">Your Business</p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <h2 className="text-2xl font-bold md:text-3xl">Tampa Pressure Washing</h2>
-                    <Pencil size={18} className="text-blue-300" />
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-300">
-                    <span className="rounded-lg bg-blue-500/10 px-3 py-1 text-blue-300">Pressure Washing Business</span>
-                    <span className="flex items-center gap-1"><MapPin size={16} /> Tampa, FL</span>
-                  </div>
-                  <button className="mt-5 rounded-lg border border-white/10 px-4 py-2 text-sm text-white hover:bg-white/5">
-                    View Business Profile
-                  </button>
-                </div>
-              </div>
-
-              <div className="border-white/10 md:border-l md:pl-8">
-                <p className="text-sm text-slate-400">Launch Progress</p>
-                <div className="mt-2 text-4xl font-bold text-blue-400">{progress}%</div>
-                <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full rounded-full bg-blue-500" style={{ width: `${progress}%` }} />
-                </div>
-                <p className="mt-4 text-sm text-slate-300">{completedCount} of {steps.length} sections completed</p>
-                <p className="mt-3 flex items-center gap-2 text-sm text-slate-300">
-                  <CalendarDays size={17} /> Launch Goal: 7 Days
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="mt-6 rounded-2xl border border-white/10 bg-[#061529] p-6 md:p-8">
-            <div className="grid gap-8 md:grid-cols-[1.2fr_.8fr]">
-              <div className="flex gap-5">
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-blue-400/20 bg-blue-500/10 text-blue-300">
-                  <Monitor size={42} />
-                </div>
-                <div>
-                  <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-blue-300">Your Next Step</p>
-                  <h3 className="text-2xl font-bold">Set Up Your Brand & Website</h3>
-                  <p className="mt-2 max-w-xl text-slate-300">Create the look of your business and build the page customers will see.</p>
-                  <p className="mt-4 text-sm text-slate-300">Simple step-by-step setup</p>
-                  <button className="mt-6 flex w-full max-w-xs items-center justify-center gap-2 rounded-xl bg-blue-500 px-6 py-3 font-semibold hover:bg-blue-400">
-                    Continue Step <ChevronRight size={18} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-                <h4 className="font-semibold">Simple Rule</h4>
-                <p className="mt-3 text-sm leading-6 text-slate-300">
-                  You do not have to complete this in order. Click any section below and finish what you can.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="mt-6 rounded-2xl border border-white/10 bg-[#061529] p-4 md:p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Build Your Business</h2>
-              <p className="text-sm text-slate-300">{completedCount} of {steps.length} completed</p>
-            </div>
-
-            <div className="overflow-hidden rounded-2xl border border-white/10">
-              {steps.map((step) => {
-                const Icon = step.icon;
-                const active = selectedStep.id === step.id;
-                return (
-                  <button
-                    key={step.id}
-                    onClick={() => setSelectedStep(step)}
-                    className={`flex w-full items-center gap-4 border-b border-white/10 p-5 text-left transition last:border-b-0 ${
-                      active ? "bg-blue-500/10" : "hover:bg-white/[0.03]"
-                    }`}
-                  >
-                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border ${
-                      step.status === "Completed"
-                        ? "border-emerald-400/30 bg-emerald-500/20 text-emerald-300"
-                        : step.status === "In Progress"
-                          ? "border-blue-400/30 bg-blue-500/20 text-blue-300"
-                          : "border-white/10 bg-white/[0.03] text-slate-300"
-                    }`}>
-                      {step.status === "Completed" ? <Check size={22} /> : <Icon size={22} />}
+            return (
+              <motion.div
+                key={step.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 + index * 0.05 }}
+                onClick={() => setSelectedStep(selectedStep === step.id ? null : step.id)}
+                className="group cursor-pointer rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm transition hover:border-sky-400/30 hover:bg-white/[0.05]"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex flex-1 gap-4">
+                    <div
+                      className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl transition ${
+                        isCompleted
+                          ? "bg-sky-400/20 text-sky-400"
+                          : "bg-white/10 text-slate-400"
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <Check className="h-6 w-6" />
+                      ) : (
+                        <StepIcon className="h-6 w-6" />
+                      )}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold">{step.id}. {step.title}</h3>
+
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold">{step.title}</h3>
+                        {isCompleted && (
+                          <span className="rounded-full bg-sky-400/20 px-2 py-0.5 text-xs font-medium text-sky-300">
+                            Completed
+                          </span>
+                        )}
+                      </div>
                       <p className="mt-1 text-sm text-slate-400">{step.description}</p>
                     </div>
-                    <StatusBadge status={step.status} />
-                    <ChevronRight size={18} className="text-slate-400" />
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-blue-400/20 bg-blue-500/10 p-5">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-sm uppercase tracking-wide text-blue-300">Selected Section</p>
-                  <h3 className="mt-1 text-xl font-bold">{selectedStep.title}</h3>
-                  <p className="mt-1 text-sm text-slate-300">Open this section, complete the tasks, then mark it complete.</p>
-                </div>
-                <button
-                  onClick={markSelectedComplete}
-                  className="rounded-xl bg-blue-500 px-5 py-3 font-semibold hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={selectedStep.status === "Completed"}
-                >
-                  Mark Complete
-                </button>
-              </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-5">
-                {selectedStep.items.map((item) => (
-                  <div key={item} className="rounded-xl border border-white/10 bg-black/10 p-3 text-sm text-slate-300">
-                    {item}
                   </div>
-                ))}
-              </div>
-            </div>
-          </section>
 
-          <section className="mt-6 rounded-2xl border border-white/10 bg-[#061529] p-6">
-            <h2 className="mb-5 text-xl font-semibold">Quick Actions</h2>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <button key={action.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-left hover:bg-white/[0.06]">
-                    <Icon className="mb-4 text-blue-300" size={24} />
-                    <h3 className="font-semibold">{action.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-400">{action.description}</p>
-                    <ChevronRight className="mt-4 text-slate-400" size={18} />
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        </main>
-      </div>
+                  <ChevronRight
+                    className={`h-5 w-5 flex-shrink-0 transition ${
+                      selectedStep === step.id ? "rotate-90" : ""
+                    } text-slate-500`}
+                  />
+                </div>
+
+                {/* Expanded Section */}
+                {selectedStep === step.id && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="mt-6 border-t border-white/10 pt-6"
+                  >
+                    <div className="space-y-3">
+                      {step.items.map((item, itemIndex) => (
+                        <label
+                          key={itemIndex}
+                          className="flex cursor-pointer items-center gap-3 rounded-lg p-2 transition hover:bg-white/5"
+                        >
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 cursor-pointer rounded border-white/20 bg-white/5 text-sky-400 accent-sky-400"
+                            defaultChecked={false}
+                          />
+                          <span className="text-sm text-slate-300">{item}</span>
+                        </label>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleStepComplete(step.id)
+                      }}
+                      className={`mt-6 w-full rounded-lg px-4 py-3 text-sm font-medium transition ${
+                        isCompleted
+                          ? "border border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]"
+                          : "border border-sky-400/30 bg-sky-400/10 text-sky-300 hover:bg-sky-400/20"
+                      }`}
+                    >
+                      {isCompleted ? "Mark Incomplete" : "Mark Complete"}
+                    </button>
+                  </motion.div>
+                )}
+              </motion.div>
+            )
+          })}
+        </div>
+
+        {/* Quick Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.4 }}
+          className="mt-12 grid gap-4 md:grid-cols-3"
+        >
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+              Steps Completed
+            </p>
+            <p className="mt-2 text-2xl font-semibold">{completedCount}</p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+              Days Active
+            </p>
+            <p className="mt-2 text-2xl font-semibold">3</p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+              Next Milestone
+            </p>
+            <p className="mt-2 text-lg font-semibold text-sky-400">50%</p>
+          </div>
+        </motion.div>
+      </main>
     </div>
-  );
+  )
 }
