@@ -869,27 +869,27 @@ function LaunchServices() {
   return (
     <>
       {/* Homepage Section */}
-      <section className="mx-auto max-w-5xl px-6 py-20">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold leading-tight md:text-5xl">
+      <section className="relative flex min-h-screen items-center justify-center px-6">
+        <div className="text-center max-w-3xl">
+          <h1 className="text-5xl font-bold leading-tight md:text-6xl lg:text-7xl">
             Launch your business
           </h1>
-          <p className="mt-4 text-lg text-slate-400">
+          <p className="mt-6 text-xl text-slate-400 md:text-2xl">
             Turn your idea into a thriving business with our proven 7-day launch system. Get a clear roadmap, expert guidance, and everything you need to succeed.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3 justify-center">
+          <div className="mt-12 flex flex-wrap gap-4 justify-center">
             <button
               onClick={handleGetStarted}
-              className="inline-flex items-center rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] transition hover:bg-sky-300"
+              className="inline-flex items-center rounded-lg bg-sky-400 px-8 py-4 text-base font-semibold text-[#0a1220] transition hover:bg-sky-300"
             >
               Start Your Launch
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="ml-2 h-5 w-5" />
             </button>
             <button
               onClick={() => {
                 document.getElementById("learn-more")?.scrollIntoView({ behavior: "smooth" })
               }}
-              className="inline-flex items-center rounded-lg border border-white/30 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/5"
+              className="inline-flex items-center rounded-lg border border-white/30 px-8 py-4 text-base font-semibold text-white transition hover:bg-white/5"
             >
               Learn More
             </button>
