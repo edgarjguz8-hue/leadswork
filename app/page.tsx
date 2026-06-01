@@ -1466,7 +1466,10 @@ export default function LeadsWorkWebsite() {
   
   const renderPage = () => {
     if (page === "marketplace") return <DomainMarketplace />
-    if (page === "launch") return <LaunchServices />
+    if (page === "launch") {
+      router.push("/launch")
+      return null
+    }
     if (page === "tools") return <ConnectNetwork />
     if (page === "membership") return <Membership />
     return <HomePage setPage={setPage} />
