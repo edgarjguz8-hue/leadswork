@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { businessLaunch, launchSubtask, launchStep } from '@/lib/db/schema'
+import { businessLaunch } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { headers } from 'next/headers'
 
@@ -31,35 +31,56 @@ export async function POST(
 
     const { stepId, subtaskId, isCompleted } = await req.json()
 
-    // Update subtask
-    await db
-      .update(launchSubtask)
-      .set({
-        isCompleted,
-        completedAt: isCompleted ? new Date() : null,
-        updatedAt: new Date(),
-      })
-      .where(eq(launchSubtask.id, subtaskId))
+    // Parse current steps
+    let steps = []
+    try {
+      steps = launch.completedSteps ? JSON.parse(launch.completedSteps) : []
+    } catch (e) {
+      console.error('[v0] Error parsing steps:', e)
+      steps = []
+    }
 
-    // Check if all subtasks in this step are completed
-    const step = await db.query.launchStep.findFirst({
-      where: eq(launchStep.id, stepId),
-      with: { subtasks: true },
-    })
-
-    if (step) {
-      const allCompleted = step.subtasks.every(st => st.isCompleted)
-      if (allCompleted) {
-        await db
-          .update(launchStep)
-          .set({
-            isCompleted: true,
-            completedAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(eq(launchStep.id, stepId))
+    // Find and update the subtask
+    let found = false
+    for (const step of steps) {
+      if (step.id === stepId) {
+        for (const subtask of step.subtasks || []) {
+          if (subtask.id === subtaskId) {
+            subtask.isCompleted = isCompleted
+            subtask.completedAt = isCompleted ? new Date().toISOString() : null
+            found = true
+            break
+          }
+        }
+        // Check if all subtasks in this step are completed
+        if (step.subtasks) {
+          step.isCompleted = step.subtasks.every((s: any) => s.isCompleted)
+          if (step.isCompleted) {
+            step.completedAt = new Date().toISOString()
+          }
+        }
+        break
       }
     }
+
+    if (!found) {
+      return Response.json({ error: 'Subtask not found' }, { status: 404 })
+    }
+
+    // Calculate overall progress
+    const allSubtasks = steps.flatMap((s: any) => s.subtasks || [])
+    const completedSubtasks = allSubtasks.filter((s: any) => s.isCompleted).length
+    const progress = allSubtasks.length > 0 ? Math.round((completedSubtasks / allSubtasks.length) * 100) : 0
+
+    // Update launch record
+    await db
+      .update(businessLaunch)
+      .set({
+        completedSteps: JSON.stringify(steps),
+        progress,
+        updatedAt: new Date(),
+      })
+      .where(eq(businessLaunch.id, launchId))
 
     return Response.json({ success: true })
   } catch (error) {
