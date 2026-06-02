@@ -57,7 +57,7 @@ export default function LaunchDashboard() {
   const { data: session, isPending } = useSession()
   const [launch, setLaunch] = useState<Launch | null>(null)
   const [loading, setLoading] = useState(true)
-  const [expandedSteps, setExpandedSteps] = useState<number[]>([])
+  const [expandedSteps, setExpandedSteps] = useState<number[]>([1])
   const [aiAssistantActive, setAiAssistantActive] = useState(false)
 
   useEffect(() => {

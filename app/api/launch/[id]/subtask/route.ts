@@ -6,9 +6,12 @@ import { headers } from 'next/headers'
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
+    const launchId = resolvedParams.id
+    
     const session = await auth.api.getSession({ headers: await headers() })
     if (!session?.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -17,7 +20,7 @@ export async function POST(
     // Verify user owns this launch
     const launch = await db.query.businessLaunch.findFirst({
       where: and(
-        eq(businessLaunch.id, params.id),
+        eq(businessLaunch.id, launchId),
         eq(businessLaunch.userId, session.user.id)
       ),
     })
