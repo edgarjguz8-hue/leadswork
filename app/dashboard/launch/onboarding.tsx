@@ -46,6 +46,25 @@ export function LaunchOnboarding() {
     }
   }
 
+  const getButtonDisabled = () => {
+    if (loading) return true
+    
+    // On each step, check the required fields for that step
+    switch (step) {
+      case 1:
+        return !data.businessName || !data.businessType
+      case 2:
+        return !data.industry || !data.description
+      case 3:
+        return !data.targetMarket || !data.businessGoal
+      case 4:
+        // Review step - button should never be disabled
+        return false
+      default:
+        return false
+    }
+  }
+
   const submitOnboarding = async () => {
     setLoading(true)
     try {
@@ -58,9 +77,12 @@ export function LaunchOnboarding() {
       if (response.ok) {
         const result = await response.json()
         router.push(`/dashboard/launch/${result.launchId}`)
+      } else {
+        const errorText = await response.text()
+        console.error('[v0] Onboarding API error:', response.status, errorText)
       }
     } catch (error) {
-      console.error('Onboarding error:', error)
+      console.error('[v0] Onboarding submission error:', error)
     } finally {
       setLoading(false)
     }
@@ -228,7 +250,7 @@ export function LaunchOnboarding() {
           </button>
           <button
             onClick={handleNext}
-            disabled={loading || !data.businessName || !data.businessType}
+            disabled={getButtonDisabled()}
             className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] hover:bg-sky-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {step === 4 ? (
