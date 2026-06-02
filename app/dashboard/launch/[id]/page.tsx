@@ -12,6 +12,7 @@ import {
   Lock,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { AIToolsGrid } from '@/components/AIToolsGrid'
 
 interface Step {
   id: string
@@ -39,6 +40,15 @@ interface Launch {
   progress: number
   description: string
   steps: Step[]
+}
+
+// Map step numbers to section keys for AI tools
+const stepToSection = {
+  1: 'foundation' as const,
+  2: 'market' as const,
+  3: 'brand' as const,
+  4: 'sales' as const,
+  5: 'operations' as const,
 }
 
 export default function LaunchDashboard() {
@@ -316,41 +326,57 @@ export default function LaunchDashboard() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="border-t border-white/10 p-6 space-y-3"
+                  className="border-t border-white/10 p-6 space-y-6"
                 >
-                  {step.subtasks.map((subtask) => (
-                    <motion.div
-                      key={subtask.id}
-                      initial={{ opacity: 0, x: -12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className={`flex items-start gap-3 p-4 rounded-lg border ${
-                        subtask.isCompleted
-                          ? 'border-emerald-400/20 bg-emerald-400/5'
-                          : 'border-white/10 bg-white/[0.02] hover:border-sky-400/20'
-                      } transition group cursor-pointer`}
-                      onClick={() => completeSubtask(step.id, subtask.id)}
-                    >
+                  {/* AI Tools Section */}
+                  <div>
+                    <AIToolsGrid
+                      section={stepToSection[step.stepNumber as keyof typeof stepToSection] || 'foundation'}
+                      businessContext={`Business: ${launch.name}, Industry: ${launch.industry}, Description: ${launch.description}`}
+                      title={`AI Tools for ${step.title}`}
+                      showAsButtons={true}
+                    />
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-white/10" />
+
+                  {/* Subtasks List */}
+                  <div className="space-y-3">
+                    {step.subtasks.map((subtask) => (
                       <motion.div
-                        initial={{ scale: 0.8 }}
-                        animate={{ scale: 1 }}
-                        className={`flex h-6 w-6 items-center justify-center rounded border flex-shrink-0 mt-0.5 ${
+                        key={subtask.id}
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className={`flex items-start gap-3 p-4 rounded-lg border ${
                           subtask.isCompleted
-                            ? 'bg-emerald-400 border-emerald-400'
-                            : 'border-white/20 group-hover:border-sky-400'
-                        } transition`}
+                            ? 'border-emerald-400/20 bg-emerald-400/5'
+                            : 'border-white/10 bg-white/[0.02] hover:border-sky-400/20'
+                        } transition group cursor-pointer`}
+                        onClick={() => completeSubtask(step.id, subtask.id)}
                       >
-                        {subtask.isCompleted && <Check className="h-4 w-4 text-[#0a1220]" />}
+                        <motion.div
+                          initial={{ scale: 0.8 }}
+                          animate={{ scale: 1 }}
+                          className={`flex h-6 w-6 items-center justify-center rounded border flex-shrink-0 mt-0.5 ${
+                            subtask.isCompleted
+                              ? 'bg-emerald-400 border-emerald-400'
+                              : 'border-white/20 group-hover:border-sky-400'
+                          } transition`}
+                        >
+                          {subtask.isCompleted && <Check className="h-4 w-4 text-[#0a1220]" />}
+                        </motion.div>
+                        <div className="flex-1">
+                          <p className={`text-sm font-medium ${subtask.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
+                            {subtask.title}
+                          </p>
+                          {subtask.aiAssistanceType && (
+                            <p className="text-xs text-sky-400 mt-1">AI {subtask.aiAssistanceType} available</p>
+                          )}
+                        </div>
                       </motion.div>
-                      <div className="flex-1">
-                        <p className={`text-sm font-medium ${subtask.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
-                          {subtask.title}
-                        </p>
-                        {subtask.aiAssistanceType && (
-                          <p className="text-xs text-sky-400 mt-1">AI {subtask.aiAssistanceType} available</p>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
+                    ))}
+                  </div>
                 </motion.div>
               )}
             </motion.div>
