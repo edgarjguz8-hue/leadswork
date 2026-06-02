@@ -68,21 +68,28 @@ export function LaunchOnboarding() {
   const submitOnboarding = async () => {
     setLoading(true)
     try {
+      console.log('[v0] Submitting onboarding data:', data)
       const response = await fetch('/api/launch/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
 
+      console.log('[v0] API response status:', response.status)
+      
       if (response.ok) {
         const result = await response.json()
+        console.log('[v0] Launch created successfully:', result)
+        console.log('[v0] Redirecting to:', `/dashboard/launch/${result.launchId}`)
         router.push(`/dashboard/launch/${result.launchId}`)
       } else {
         const errorText = await response.text()
         console.error('[v0] Onboarding API error:', response.status, errorText)
+        alert(`Error: ${errorText || 'Failed to create launch'}`)
       }
     } catch (error) {
       console.error('[v0] Onboarding submission error:', error)
+      alert('Error submitting form. Please try again.')
     } finally {
       setLoading(false)
     }

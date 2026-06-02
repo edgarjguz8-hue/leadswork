@@ -19,6 +19,7 @@ export async function POST(req: Request) {
 
     // Create business launch
     const launchId = nanoid()
+    console.log('[v0] Generated launchId:', launchId)
     
     try {
       await db.insert(businessLaunch).values({
@@ -31,10 +32,10 @@ export async function POST(req: Request) {
         location: '',
         progress: 0,
       })
-      console.log('[v0] Business launch created:', launchId)
+      console.log('[v0] Business launch created in database:', launchId)
     } catch (dbError) {
       console.error('[v0] Database error creating launch:', dbError)
-      // Even if main launch fails, try to create a minimal record
+      return Response.json({ error: 'Failed to create launch in database', details: String(dbError) }, { status: 500 })
     }
 
     // Create the 5 main steps with their subtasks
@@ -97,8 +98,10 @@ export async function POST(req: Request) {
     ]
 
     try {
+      console.log('[v0] Creating steps and subtasks for launchId:', launchId)
       for (const stepDef of stepDefinitions) {
         const stepId = nanoid()
+        console.log('[v0] Creating step:', stepDef.number, stepId)
 
         // Create step
         await db.insert(launchStep).values({
@@ -120,15 +123,16 @@ export async function POST(req: Request) {
             aiAssistanceType: subtask.aiType,
           })
         }
+        console.log('[v0] Step', stepDef.number, 'created with', stepDef.subtasks.length, 'subtasks')
       }
-      console.log('[v0] All steps and subtasks created successfully')
+      console.log('[v0] All 5 steps and subtasks created successfully')
     } catch (stepsError) {
       console.error('[v0] Error creating steps/subtasks:', stepsError)
-      // Steps creation failed but launch was created, so still return success
+      return Response.json({ error: 'Failed to create steps', details: String(stepsError) }, { status: 500 })
     }
 
     console.log('[v0] Onboarding completed successfully, returning launchId:', launchId)
-    return Response.json({ launchId, success: true })
+    return Response.json({ launchId, id: launchId, success: true })
   } catch (error) {
     console.error('[v0] Onboarding API error:', error)
     return Response.json({ error: 'Failed to create launch', details: String(error) }, { status: 500 })
