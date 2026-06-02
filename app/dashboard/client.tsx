@@ -53,29 +53,17 @@ export default function DashboardClient() {
           setSellerDomains(result.domains || [])
         }
         
-        // Add mock business launches for demonstration
-        setBusinessLaunches([
-          {
-            id: '1',
-            name: 'TechFlow Consulting',
-            description: 'Building a tech consulting startup from scratch',
-            businessType: 'Service',
-            progress: 40,
-            status: 'in_progress',
-            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          {
-            id: '2',
-            name: 'Local Fitness Studio',
-            description: 'Launching a fitness studio in downtown area',
-            businessType: 'Fitness',
-            progress: 60,
-            status: 'in_progress',
-            createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-        ])
+        // Fetch real business launches
+        try {
+          const launchResponse = await fetch('/api/launch/list')
+          if (launchResponse.ok) {
+            const launchData = await launchResponse.json()
+            setBusinessLaunches(launchData.launches || [])
+          }
+        } catch (error) {
+          console.error('Failed to fetch launches:', error)
+          setBusinessLaunches([])
+        }
         
         setLoading(false)
       }
@@ -328,7 +316,7 @@ export default function DashboardClient() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  onClick={() => router.push(`/dashboard/launch?id=${launch.id}`)}
+                  onClick={() => router.push(`/dashboard/launch/${launch.id}`)}
                   className="group cursor-pointer rounded-xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur transition hover:bg-white/[0.06] hover:border-sky-400/30"
                 >
                   <div className="flex items-start justify-between mb-4">
