@@ -1,11 +1,12 @@
-import { getSession } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { businessLaunch, launchStep, launchSubtask } from '@/lib/db/schema'
 import { nanoid } from 'nanoid'
+import { headers } from 'next/headers'
 
 export async function POST(req: Request) {
   try {
-    const session = await getSession()
+    const session = await auth.api.getSession({ headers: await headers() })
     if (!session?.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -21,11 +22,11 @@ export async function POST(req: Request) {
       description: data.description,
       businessType: data.businessType,
       industry: data.industry,
-      location: '', // Can be added later
+      location: '',
       progress: 0,
     })
 
-    // Create the 5 main steps
+    // Define all 5 steps with their subtasks
     const stepDefinitions = [
       {
         number: 1,
@@ -84,10 +85,10 @@ export async function POST(req: Request) {
       },
     ]
 
+    // Create steps and subtasks
     for (const stepDef of stepDefinitions) {
       const stepId = nanoid()
 
-      // Create step
       await db.insert(launchStep).values({
         id: stepId,
         launchId,
@@ -96,7 +97,6 @@ export async function POST(req: Request) {
         description: stepDef.description,
       })
 
-      // Create subtasks for this step
       for (let i = 0; i < stepDef.subtasks.length; i++) {
         const subtask = stepDef.subtasks[i]
         await db.insert(launchSubtask).values({
@@ -111,7 +111,7 @@ export async function POST(req: Request) {
 
     return Response.json({ launchId, success: true })
   } catch (error) {
-    console.error('Onboarding error:', error)
+    console.error('[v0] Onboarding error:', error)
     return Response.json({ error: 'Failed to create launch' }, { status: 500 })
   }
 }

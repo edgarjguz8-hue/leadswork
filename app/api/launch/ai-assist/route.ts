@@ -1,4 +1,5 @@
 import { streamText } from 'ai'
+import { headers } from 'next/headers'
 
 const aiAssistants = {
   analyzer: 'Business Analyst',
@@ -40,7 +41,7 @@ Explain why each recommendation is appropriate for their situation.`,
     }
 
     const result = await streamText({
-      model: 'openai/gpt-5-mini',
+      model: 'openai/gpt-4o-mini',
       system: systemPrompts[assistanceType as keyof typeof systemPrompts] || systemPrompts.guide,
       prompt: `Task: ${subtaskTitle}
 Step: ${stepTitle}
@@ -51,7 +52,7 @@ Provide assistance for completing this task. Be specific, actionable, and helpfu
 
     return result.toTextStreamResponse()
   } catch (error) {
-    console.error('AI assistance error:', error)
+    console.error('[v0] AI assistance error:', error)
     return Response.json({ error: 'Failed to generate assistance' }, { status: 500 })
   }
 }

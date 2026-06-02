@@ -1,14 +1,15 @@
-import { getSession } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { businessLaunch, launchSubtask, launchStep } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
+import { headers } from 'next/headers'
 
 export async function POST(
   req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getSession()
+    const session = await auth.api.getSession({ headers: await headers() })
     if (!session?.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -59,7 +60,7 @@ export async function POST(
 
     return Response.json({ success: true })
   } catch (error) {
-    console.error('Failed to update subtask:', error)
+    console.error('[v0] Failed to update subtask:', error)
     return Response.json({ error: 'Failed to update subtask' }, { status: 500 })
   }
 }
