@@ -57,6 +57,7 @@ export default function LaunchDashboard() {
   const { data: session, isPending } = useSession()
   const [launch, setLaunch] = useState<Launch | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [expandedSteps, setExpandedSteps] = useState<number[]>([1])
   const [aiAssistantActive, setAiAssistantActive] = useState(false)
 
@@ -66,18 +67,33 @@ export default function LaunchDashboard() {
       return
     }
 
-    fetchLaunch()
-  }, [session])
+    if (params.id) {
+      fetchLaunch()
+    }
+  }, [session, params.id])
 
   const fetchLaunch = async () => {
     try {
-      const response = await fetch(`/api/launch/${params.id}`)
+      setLoading(true)
+      setError(null)
+      
+      const launchId = params.id
+      console.log('[v0] Fetching launch:', launchId)
+      
+      const response = await fetch(`/api/launch/${launchId}`)
+      
       if (response.ok) {
         const data = await response.json()
+        console.log('[v0] Launch fetched successfully:', data.id)
         setLaunch(data)
+      } else {
+        const errorData = await response.json()
+        console.error('[v0] Failed to fetch launch:', response.status, errorData)
+        setError(`Failed to load launch: ${errorData.error || 'Unknown error'}`)
       }
     } catch (error) {
-      console.error('Failed to fetch launch:', error)
+      console.error('[v0] Error fetching launch:', error)
+      setError('Error loading launch. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -122,15 +138,26 @@ export default function LaunchDashboard() {
   if (isPending || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a1220]">
-        <p className="text-slate-400">Loading...</p>
+        <div className="text-center">
+          <p className="text-slate-400">Loading your launch...</p>
+        </div>
       </div>
     )
   }
 
-  if (!launch) {
+  if (error || !launch) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a1220]">
-        <p className="text-slate-400">Launch not found</p>
+        <div className="text-center max-w-md">
+          <p className="text-lg font-semibold text-white mb-2">Launch not found</p>
+          <p className="text-slate-400 mb-6">{error || 'The launch could not be loaded.'}</p>
+          <button
+            onClick={() => router.push('/dashboard/launch')}
+            className="inline-flex items-center gap-2 rounded-lg bg-sky-400 px-6 py-2 text-sm font-medium text-[#0a1220] hover:bg-sky-300 transition"
+          >
+            Start New Launch
+          </button>
+        </div>
       </div>
     )
   }
