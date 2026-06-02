@@ -1,0 +1,244 @@
+'use client'
+
+import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { ArrowRight, Sparkles } from 'lucide-react'
+
+interface OnboardingData {
+  businessName: string
+  businessType: string
+  industry: string
+  description: string
+  targetMarket: string
+  businessGoal: string
+}
+
+export function LaunchOnboarding() {
+  const router = useRouter()
+  const [step, setStep] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [data, setData] = useState<OnboardingData>({
+    businessName: '',
+    businessType: '',
+    industry: '',
+    description: '',
+    targetMarket: '',
+    businessGoal: '',
+  })
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleNext = () => {
+    if (step < 4) {
+      setStep(step + 1)
+    } else {
+      submitOnboarding()
+    }
+  }
+
+  const handleBack = () => {
+    if (step > 1) {
+      setStep(step - 1)
+    }
+  }
+
+  const submitOnboarding = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/launch/onboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        router.push(`/dashboard/launch/${result.launchId}`)
+      }
+    } catch (error) {
+      console.error('Onboarding error:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0a1220] flex items-center justify-center px-6 py-12">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-2xl"
+      >
+        {/* Header */}
+        <div className="mb-12 text-center">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Sparkles className="h-6 w-6 text-sky-400" />
+            <h1 className="text-4xl font-bold text-white">Start Your Business Launch</h1>
+          </div>
+          <p className="text-slate-400">Step {step} of 4 - Tell us about your business idea</p>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-8 h-2 w-full bg-white/10 rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-sky-400"
+            initial={{ width: 0 }}
+            animate={{ width: `${(step / 4) * 100}%` }}
+            transition={{ duration: 0.3 }}
+          />
+        </div>
+
+        {/* Form Content */}
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur"
+        >
+          {step === 1 && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">Business Name</label>
+                <input
+                  type="text"
+                  name="businessName"
+                  value={data.businessName}
+                  onChange={handleInputChange}
+                  placeholder="What's your business called?"
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">Business Type</label>
+                <select
+                  name="businessType"
+                  value={data.businessType}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white focus:border-sky-400 focus:outline-none transition"
+                >
+                  <option value="">Select a type...</option>
+                  <option value="service">Service Business</option>
+                  <option value="product">Product Business</option>
+                  <option value="saas">SaaS</option>
+                  <option value="ecommerce">E-commerce</option>
+                  <option value="consulting">Consulting</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">Industry</label>
+                <input
+                  type="text"
+                  name="industry"
+                  value={data.industry}
+                  onChange={handleInputChange}
+                  placeholder="What industry is your business in?"
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">Business Description</label>
+                <textarea
+                  name="description"
+                  value={data.description}
+                  onChange={handleInputChange}
+                  placeholder="Describe what your business does..."
+                  rows={4}
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition resize-none"
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">Target Market</label>
+                <input
+                  type="text"
+                  name="targetMarket"
+                  value={data.targetMarket}
+                  onChange={handleInputChange}
+                  placeholder="Who is your ideal customer?"
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">What problem do you solve?</label>
+                <textarea
+                  name="businessGoal"
+                  value={data.businessGoal}
+                  onChange={handleInputChange}
+                  placeholder="What's the main problem your business solves?"
+                  rows={4}
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition resize-none"
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-6">
+              <div className="rounded-lg border border-sky-400/30 bg-sky-400/10 p-6">
+                <h3 className="font-semibold text-white mb-4">Review Your Information</h3>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-slate-400">Business Name</p>
+                    <p className="text-white font-medium">{data.businessName}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400">Business Type</p>
+                    <p className="text-white font-medium capitalize">{data.businessType}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400">Industry</p>
+                    <p className="text-white font-medium">{data.industry}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400">Target Market</p>
+                    <p className="text-white font-medium">{data.targetMarket}</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-slate-400 text-sm">
+                Once you start, our AI system will guide you through building your business with personalized recommendations at every step.
+              </p>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Buttons */}
+        <div className="mt-8 flex gap-3">
+          <button
+            onClick={handleBack}
+            disabled={step === 1}
+            className="flex-1 rounded-lg border border-white/10 px-6 py-3 text-sm font-medium text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            Back
+          </button>
+          <button
+            onClick={handleNext}
+            disabled={loading || !data.businessName || !data.businessType}
+            className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] hover:bg-sky-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {step === 4 ? (
+              <>Start Launch {loading && <Sparkles className="h-4 w-4 animate-spin" />}</>
+            ) : (
+              <>Next <ArrowRight className="h-4 w-4" /></>
+            )}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  )
+}

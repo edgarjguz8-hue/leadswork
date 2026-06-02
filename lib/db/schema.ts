@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, boolean, integer, json } from 'drizzle-orm/pg-core'
 
 // --- Better Auth required tables -------------------------------------------
 // Column names are camelCase to match Better Auth's defaults. Do not rename.
@@ -135,4 +135,63 @@ export const businessLaunch = pgTable('businessLaunch', {
   status: text('status').notNull().default('in_progress'), // in_progress, launched, paused
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+})
+
+// --- Business Launch System Tables -------------------------------------------
+
+export const launchStep = pgTable('launchStep', {
+  id: text('id').primaryKey(),
+  launchId: text('launchId')
+    .notNull()
+    .references(() => businessLaunch.id, { onDelete: 'cascade' }),
+  stepNumber: integer('stepNumber').notNull(), // 1-5
+  title: text('title').notNull(),
+  description: text('description'),
+  isCompleted: boolean('isCompleted').notNull().default(false),
+  completedAt: timestamp('completedAt'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+})
+
+export const launchSubtask = pgTable('launchSubtask', {
+  id: text('id').primaryKey(),
+  stepId: text('stepId')
+    .notNull()
+    .references(() => launchStep.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description'),
+  order: integer('order').notNull(),
+  isCompleted: boolean('isCompleted').notNull().default(false),
+  completedAt: timestamp('completedAt'),
+  aiAssistanceType: text('aiAssistanceType'), // 'analyzer', 'guide', 'generator', 'researcher', 'strategist'
+  resourceIds: json('resourceIds').$type<string[]>().default([]), // References to resources
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+})
+
+export const launchResource = pgTable('launchResource', {
+  id: text('id').primaryKey(),
+  stepId: text('stepId')
+    .notNull()
+    .references(() => launchStep.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // 'template', 'guide', 'tool', 'calculator', 'generator'
+  title: text('title').notNull(),
+  description: text('description'),
+  content: text('content'), // HTML or JSON content
+  url: text('url'), // External URL if applicable
+  order: integer('order').notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+})
+
+export const launchChat = pgTable('launchChat', {
+  id: text('id').primaryKey(),
+  launchId: text('launchId')
+    .notNull()
+    .references(() => businessLaunch.id, { onDelete: 'cascade' }),
+  stepId: text('stepId')
+    .notNull()
+    .references(() => launchStep.id, { onDelete: 'cascade' }),
+  role: text('role').notNull(), // 'user', 'assistant'
+  content: text('content').notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
 })
