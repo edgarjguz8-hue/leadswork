@@ -805,8 +805,8 @@ function LaunchServices() {
   const launchSteps = [
     {
       number: "01",
-      title: "Define Your Idea",
-      description: "Clarify your business concept, target market, and value proposition with our guided worksheets.",
+      title: "Create Your Business",
+      description: "LeadsWork helps you create and define your business idea. We build the foundation of the business for you.",
       icon: Target,
     },
     {
