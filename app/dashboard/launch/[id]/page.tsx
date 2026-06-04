@@ -62,7 +62,6 @@ export default function LaunchDashboard() {
   const [launch, setLaunch] = useState<Launch | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [expandedSteps, setExpandedSteps] = useState<number[]>([1])
   const [aiAssistantActive, setAiAssistantActive] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -116,14 +115,6 @@ export default function LaunchDashboard() {
       }
     }
     return null
-  }
-
-  const toggleStepExpansion = (stepNumber: number) => {
-    setExpandedSteps(prev =>
-      prev.includes(stepNumber)
-        ? prev.filter(s => s !== stepNumber)
-        : [...prev, stepNumber]
-    )
   }
 
   const completeSubtask = async (stepId: string, subtaskId: string) => {
@@ -334,11 +325,6 @@ export default function LaunchDashboard() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    if (launch.steps[1] && !expandedSteps.includes(launch.steps[1].stepNumber)) {
-                      toggleStepExpansion(launch.steps[1].stepNumber)
-                    }
-                  }}
                   className="w-full rounded-lg bg-sky-500 px-6 py-3 text-sm font-semibold text-white hover:bg-sky-600 transition flex items-center justify-center gap-2"
                 >
                   Continue Building <ChevronRight className="h-4 w-4" />
@@ -458,113 +444,7 @@ export default function LaunchDashboard() {
           </motion.div>
         </div>
 
-        {/* Bottom Section - All Steps */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-white mb-6">All Steps</h3>
 
-          {launch?.steps.map((step, index) => (
-            <motion.div
-              key={step.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.03 }}
-              className="rounded-lg border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] overflow-hidden hover:border-white/20 transition"
-            >
-              {/* Step Header */}
-              <button
-                onClick={() => toggleStepExpansion(step.stepNumber)}
-                className="w-full p-4 text-left hover:bg-white/[0.06] transition flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/20">
-                    {step.isCompleted ? (
-                      <Check className="h-5 w-5 text-emerald-400" />
-                    ) : (
-                      <span className="text-xs font-bold text-sky-400">{step.stepNumber}</span>
-                    )}
-                  </div>
-                  <div className="text-left">
-                    <h4 className={`text-sm font-semibold ${step.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
-                      {step.title}
-                    </h4>
-                    <p className="text-xs text-slate-400 mt-0.5">{step.description}</p>
-                  </div>
-                </div>
-                <ChevronRight
-                  className={`h-5 w-5 text-slate-600 transition ${
-                    expandedSteps.includes(step.stepNumber) ? 'rotate-90' : ''
-                  }`}
-                />
-              </button>
-
-              {/* Subtasks */}
-              {expandedSteps.includes(step.stepNumber) && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="border-t border-white/10 p-4 space-y-3 bg-white/[0.02]"
-                >
-                  {/* Step 1: Business Builder */}
-                  {step.stepNumber === 1 ? (
-                    <Step1BusinessBuilder
-                      launchName={launch?.name || ''}
-                      launchId={launch?.id || ''}
-                      onComplete={() => fetchLaunch()}
-                    />
-                  ) : (
-                    <>
-                      {/* AI Tools Section */}
-                      <div>
-                        <AIToolsGrid
-                          section={stepToSection[step.stepNumber as keyof typeof stepToSection] || 'foundation'}
-                          businessContext={`Business: ${launch?.name}, Industry: ${launch?.industry}, Description: ${launch?.description}`}
-                          title={`AI Tools for ${step.title}`}
-                          showAsButtons={true}
-                        />
-                      </div>
-
-                      {/* Subtasks List */}
-                      <div className="space-y-2">
-                        {step.subtasks.map((subtask) => (
-                          <motion.button
-                            key={subtask.id}
-                            initial={{ opacity: 0, x: -12 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            onClick={() => completeSubtask(step.id, subtask.id)}
-                            className={`w-full flex items-start gap-3 p-3 rounded-md border transition ${
-                              subtask.isCompleted
-                                ? 'border-emerald-500/20 bg-emerald-500/5 text-slate-400'
-                                : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.06]'
-                            }`}
-                          >
-                            <div className="flex-shrink-0 mt-1">
-                              {subtask.isCompleted ? (
-                                <div className="flex h-5 w-5 items-center justify-center rounded border border-emerald-500 bg-emerald-500">
-                                  <Check className="h-3 w-3 text-slate-900" />
-                                </div>
-                              ) : (
-                                <div className="h-5 w-5 rounded border border-white/20 bg-white/[0.02]" />
-                              )}
-                            </div>
-                            <div className="text-left flex-1">
-                              <p className={`text-sm font-medium ${subtask.isCompleted ? 'line-through' : 'text-white'}`}>
-                                {subtask.title}
-                              </p>
-                              {subtask.aiAssistanceType && (
-                                <p className="text-xs text-sky-400 mt-1">AI {subtask.aiAssistanceType}</p>
-                              )}
-                            </div>
-                          </motion.button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </motion.div>
-              )}
-            </motion.div>
-          ))}
-        </div>
       </div>
       {/* Main Content - Dashboard Container */}
       <div className="mx-auto max-w-7xl px-6 py-12">
@@ -678,20 +558,6 @@ export default function LaunchDashboard() {
                   ))}
                 </div>
 
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    const firstStep = launch?.steps[0]
-                    if (firstStep && !expandedSteps.includes(firstStep.stepNumber)) {
-                      toggleStepExpansion(firstStep.stepNumber)
-                    }
-                  }}
-                  className="w-full rounded-lg border border-slate-600/50 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-700/30 hover:border-slate-500/50 transition flex items-center justify-center gap-2"
-                >
-                  View All Steps
-                  <ChevronRight className="h-4 w-4" />
-                </motion.button>
               </motion.div>
             </div>
 
@@ -755,11 +621,6 @@ export default function LaunchDashboard() {
                   <motion.button
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-                    onClick={() => {
-                      if (launch.steps[1] && !expandedSteps.includes(launch.steps[1].stepNumber)) {
-                        toggleStepExpansion(launch.steps[1].stepNumber)
-                      }
-                    }}
                     className="w-full rounded-lg bg-sky-500 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-600 transition flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20"
                   >
                     Continue Building
@@ -832,119 +693,7 @@ export default function LaunchDashboard() {
           </div>
         </motion.div>
 
-        {/* All Steps Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-12"
-        >
-          <h3 className="text-lg font-semibold text-white mb-4">All Steps</h3>
-          <div className="space-y-3">
-            {launch?.steps.map((step, index) => (
-              <motion.div
-                key={step.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-900/50 to-slate-950/80 overflow-hidden hover:border-slate-600/50 transition"
-              >
-                {/* Step Header */}
-                <button
-                  onClick={() => toggleStepExpansion(step.stepNumber)}
-                  className="w-full p-4 text-left hover:bg-slate-800/30 transition flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/20">
-                      {step.isCompleted ? (
-                        <Check className="h-5 w-5 text-emerald-400" />
-                      ) : (
-                        <span className="text-xs font-bold text-sky-400">{step.stepNumber}</span>
-                      )}
-                    </div>
-                    <div className="text-left">
-                      <h4 className={`text-sm font-semibold ${step.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
-                        {step.title}
-                      </h4>
-                      <p className="text-xs text-slate-400 mt-0.5">{step.description}</p>
-                    </div>
-                  </div>
-                  <ChevronRight
-                    className={`h-5 w-5 text-slate-600 transition ${
-                      expandedSteps.includes(step.stepNumber) ? 'rotate-90' : ''
-                    }`}
-                  />
-                </button>
 
-                {/* Subtasks */}
-                {expandedSteps.includes(step.stepNumber) && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="border-t border-slate-700/50 p-4 space-y-3 bg-slate-800/20"
-                  >
-                    {/* Step 1: Business Builder */}
-                    {step.stepNumber === 1 ? (
-                      <Step1BusinessBuilder
-                        launchName={launch?.name || ''}
-                        launchId={launch?.id || ''}
-                        onComplete={() => fetchLaunch()}
-                      />
-                    ) : (
-                      <>
-                        {/* AI Tools Section */}
-                        <div>
-                          <AIToolsGrid
-                            section={stepToSection[step.stepNumber as keyof typeof stepToSection] || 'foundation'}
-                            businessContext={`Business: ${launch?.name}, Industry: ${launch?.industry}, Description: ${launch?.description}`}
-                            title={`AI Tools for ${step.title}`}
-                            showAsButtons={true}
-                          />
-                        </div>
-
-                        {/* Subtasks List */}
-                        <div className="space-y-2">
-                          {step.subtasks.map((subtask) => (
-                            <motion.button
-                              key={subtask.id}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              onClick={() => completeSubtask(step.id, subtask.id)}
-                              className={`w-full flex items-start gap-3 p-3 rounded-md border transition ${
-                                subtask.isCompleted
-                                  ? 'border-emerald-500/20 bg-emerald-500/10 text-slate-400'
-                                  : 'border-slate-700/50 bg-slate-800/40 hover:bg-slate-700/30'
-                              }`}
-                            >
-                              <div className="flex-shrink-0 mt-1">
-                                {subtask.isCompleted ? (
-                                  <div className="flex h-5 w-5 items-center justify-center rounded border border-emerald-500 bg-emerald-500">
-                                    <Check className="h-3 w-3 text-slate-900" />
-                                  </div>
-                                ) : (
-                                  <div className="h-5 w-5 rounded border border-slate-600/50 bg-slate-700/30" />
-                                )}
-                              </div>
-                              <div className="text-left flex-1">
-                                <p className={`text-sm font-medium ${subtask.isCompleted ? 'line-through' : 'text-white'}`}>
-                                  {subtask.title}
-                                </p>
-                                {subtask.aiAssistanceType && (
-                                  <p className="text-xs text-sky-400 mt-1">AI {subtask.aiAssistanceType}</p>
-                                )}
-                              </div>
-                            </motion.button>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </motion.div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
       </div>
 
       {/* Business Assistant Chat */}
