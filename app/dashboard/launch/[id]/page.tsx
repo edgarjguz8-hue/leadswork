@@ -15,7 +15,6 @@ import {
 import { motion } from 'framer-motion'
 import { AIToolsGrid } from '@/components/AIToolsGrid'
 import { Step1BusinessBuilder } from '@/components/Step1BusinessBuilder'
-import { BusinessProgressOverview } from '@/components/BusinessProgressOverview'
 import { BusinessAssistant } from '@/components/BusinessAssistant'
 
 interface Step {
@@ -346,14 +345,6 @@ export default function LaunchDashboard() {
             </div>
           </div>
         </motion.div>
-
-        {/* Business Progress Overview */}
-        <div className="pt-4">
-          <BusinessProgressOverview
-            steps={launch.steps}
-            overallProgress={launch.progress}
-          />
-        </div>
 
         {/* Business Assistant Chat */}
         <div className="pt-4">
