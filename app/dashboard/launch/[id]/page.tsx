@@ -15,6 +15,8 @@ import {
 import { motion } from 'framer-motion'
 import { AIToolsGrid } from '@/components/AIToolsGrid'
 import { Step1BusinessBuilder } from '@/components/Step1BusinessBuilder'
+import { BusinessProgressOverview } from '@/components/BusinessProgressOverview'
+import { BusinessAssistant } from '@/components/BusinessAssistant'
 
 interface Step {
   id: string
@@ -64,6 +66,7 @@ export default function LaunchDashboard() {
   const [aiAssistantActive, setAiAssistantActive] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [businessFoundation, setBusinessFoundation] = useState<any>(null)
 
   useEffect(() => {
     if (!session?.user) {
@@ -343,6 +346,22 @@ export default function LaunchDashboard() {
             </div>
           </div>
         </motion.div>
+
+        {/* Business Progress Overview */}
+        <div className="pt-4">
+          <BusinessProgressOverview
+            steps={launch.steps}
+            overallProgress={launch.progress}
+          />
+        </div>
+
+        {/* Business Assistant Chat */}
+        <div className="pt-4">
+          <BusinessAssistant
+            launchId={String(params.id)}
+            businessFoundation={businessFoundation}
+          />
+        </div>
 
         {/* Steps Section */}
         <div className="space-y-4">
