@@ -566,6 +566,386 @@ export default function LaunchDashboard() {
           ))}
         </div>
       </div>
+      {/* Main Content - Dashboard Container */}
+      <div className="mx-auto max-w-7xl px-6 py-12">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-900/50 to-slate-950/80 p-8 shadow-lg"
+        >
+          <div className="grid gap-8 lg:grid-cols-[1fr_2.5fr]">
+            {/* LEFT COLUMN - Progress & Roadmap */}
+            <div className="flex flex-col">
+              {/* Business Header */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-8"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/20 border border-sky-500/30">
+                    <Sparkles className="h-5 w-5 text-sky-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-white">{launch?.name}</h2>
+                    <p className="text-xs text-slate-400 capitalize">{launch?.industry}</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Circular Progress Ring */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mb-6 flex justify-center"
+              >
+                <div className="relative h-40 w-40">
+                  <svg className="h-full w-full transform -rotate-90" viewBox="0 0 140 140">
+                    {/* Background circle */}
+                    <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(148, 163, 184, 0.2)" strokeWidth="6" />
+                    {/* Progress circle */}
+                    <motion.circle
+                      cx="70"
+                      cy="70"
+                      r="60"
+                      fill="none"
+                      stroke="#0ea5e9"
+                      strokeWidth="6"
+                      strokeDasharray={`${2 * Math.PI * 60}`}
+                      initial={{ strokeDashoffset: 2 * Math.PI * 60 }}
+                      animate={{
+                        strokeDashoffset: 2 * Math.PI * 60 * (1 - (launch?.progress || 0) / 100),
+                      }}
+                      transition={{ duration: 1.5, ease: 'easeInOut' }}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <p className="text-3xl font-bold text-sky-400">{launch?.progress}%</p>
+                    <p className="text-xs text-slate-400 mt-1">Complete</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Progress Stats */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-8 text-center"
+              >
+                <p className="text-sm font-semibold text-white">{launch?.steps.filter(s => s.isCompleted).length} of {launch?.steps.length} Steps Finished</p>
+                <p className="text-xs text-slate-400 mt-1">You're on your way! 🚀</p>
+              </motion.div>
+
+              {/* Divider */}
+              <div className="mb-8 h-px bg-gradient-to-r from-transparent via-slate-600/50 to-transparent" />
+
+              {/* Launch Roadmap Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-6">Launch Roadmap</h3>
+                <div className="space-y-4 mb-6">
+                  {launch?.steps.map((step, idx) => (
+                    <motion.div
+                      key={step.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="flex items-center gap-3"
+                    >
+                      <div
+                        className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold transition ${
+                          step.isCompleted
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : idx === 1
+                              ? 'bg-sky-500/30 text-sky-400 ring-1 ring-sky-400/50'
+                              : 'bg-slate-700/30 text-slate-500'
+                        }`}
+                      >
+                        {step.isCompleted ? <Check className="h-3.5 w-3.5" /> : idx + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm ${step.isCompleted ? 'text-slate-400 line-through' : idx === 1 ? 'text-sky-300 font-medium' : 'text-slate-400'}`}>
+                          Step {idx + 1}: {step.title}
+                        </p>
+                      </div>
+                      <span className={`text-xs font-medium ${step.isCompleted ? 'text-emerald-400' : idx === 1 ? 'text-sky-400' : 'text-slate-500'}`}>
+                        {step.isCompleted ? 'Done' : idx === 1 ? 'Current' : 'Upcoming'}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    const firstStep = launch?.steps[0]
+                    if (firstStep && !expandedSteps.includes(firstStep.stepNumber)) {
+                      toggleStepExpansion(firstStep.stepNumber)
+                    }
+                  }}
+                  className="w-full rounded-lg border border-slate-600/50 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-700/30 hover:border-slate-500/50 transition flex items-center justify-center gap-2"
+                >
+                  View All Steps
+                  <ChevronRight className="h-4 w-4" />
+                </motion.button>
+              </motion.div>
+            </div>
+
+            {/* RIGHT COLUMN - Actions & Current Step */}
+            <div className="flex flex-col">
+              {/* Your Next Action Label */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4"
+              >
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Your Next Action</p>
+              </motion.div>
+
+              {/* Main Card - Business Plan */}
+              {launch?.steps.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 rounded-xl border border-slate-700/50 bg-slate-800/40 p-6"
+                >
+                  <div className="mb-5">
+                    <h3 className="text-xl font-semibold text-white mb-1">{launch.steps[1]?.title || 'Next Step'}</h3>
+                    <p className="text-sm text-slate-400">{launch.steps[1]?.description || 'Build your roadmap to success'}</p>
+                  </div>
+
+                  {/* Checklist */}
+                  <div className="space-y-3 mb-6">
+                    {launch.steps.slice(0, 5).map((step, idx) => (
+                      <motion.div
+                        key={step.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="flex items-center gap-3"
+                      >
+                        <div className="flex-shrink-0">
+                          {step.isCompleted ? (
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-500/50">
+                              <Check className="h-3.5 w-3.5 text-emerald-400" />
+                            </div>
+                          ) : idx === 1 ? (
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-500/20 border border-sky-500/50">
+                              <div className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+                            </div>
+                          ) : (
+                            <div className="h-5 w-5 rounded-full border border-slate-600/50 bg-slate-700/30" />
+                          )}
+                        </div>
+                        <span className={`flex-1 text-sm ${step.isCompleted ? 'text-slate-400 line-through' : idx === 1 ? 'text-white font-medium' : 'text-slate-300'}`}>
+                          {step.title}
+                        </span>
+                        <span className={`text-xs font-medium ${step.isCompleted ? 'text-emerald-400' : idx === 1 ? 'text-sky-400' : 'text-slate-500'}`}>
+                          {step.isCompleted ? 'Done' : idx === 1 ? 'Current' : 'Upcoming'}
+                        </span>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Continue Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => {
+                      if (launch.steps[1] && !expandedSteps.includes(launch.steps[1].stepNumber)) {
+                        toggleStepExpansion(launch.steps[1].stepNumber)
+                      }
+                    }}
+                    className="w-full rounded-lg bg-sky-500 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-600 transition flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20"
+                  >
+                    Continue Building
+                    <ChevronRight className="h-4 w-4" />
+                  </motion.button>
+                </motion.div>
+              )}
+
+              {/* Two Cards Row */}
+              <div className="grid gap-4 mb-6 md:grid-cols-2">
+                {/* AI Assistant Card */}
+                <motion.button
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  whileHover={{ scale: 1.01 }}
+                  onClick={() => setAiAssistantActive(true)}
+                  className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-5 text-left hover:border-purple-500/30 hover:bg-slate-800/60 transition group"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/20 border border-purple-500/30 mb-4 group-hover:bg-purple-500/30 transition">
+                    <Sparkles className="h-5 w-5 text-purple-400" />
+                  </div>
+                  <h4 className="text-base font-semibold text-white mb-1">AI Assistant</h4>
+                  <p className="text-sm text-slate-400">Ask questions about pricing, marketing, operations, branding, or business strategy.</p>
+                </motion.button>
+
+                {/* Business Snapshot Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                  className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-5 hover:border-teal-500/30 hover:bg-slate-800/60 transition"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-500/20 border border-teal-500/30 mb-4">
+                    <Target className="h-5 w-5 text-teal-400" />
+                  </div>
+                  <h4 className="text-base font-semibold text-white mb-4">Business Snapshot</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Industry</p>
+                      <p className="text-sm text-slate-300 mt-1">{launch?.industry}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Current Stage</p>
+                      <p className="text-sm text-slate-300 mt-1">Planning</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Launch Goal</p>
+                      <p className="text-sm text-slate-300 mt-1">July 2026</p>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Pro Tip Bar */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="rounded-lg border border-slate-700/50 bg-gradient-to-r from-sky-900/20 to-slate-900/20 px-4 py-3 flex items-center justify-between"
+              >
+                <p className="text-sm text-slate-300">
+                  <span className="font-semibold text-sky-400">Pro Tip:</span> Complete your business plan to unlock AI insights, investor-ready documents, and more.
+                </p>
+                <button className="text-sm font-medium text-sky-400 hover:text-sky-300 transition whitespace-nowrap ml-4">
+                  Learn More
+                </button>
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* All Steps Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-12"
+        >
+          <h3 className="text-lg font-semibold text-white mb-4">All Steps</h3>
+          <div className="space-y-3">
+            {launch?.steps.map((step, index) => (
+              <motion.div
+                key={step.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-900/50 to-slate-950/80 overflow-hidden hover:border-slate-600/50 transition"
+              >
+                {/* Step Header */}
+                <button
+                  onClick={() => toggleStepExpansion(step.stepNumber)}
+                  className="w-full p-4 text-left hover:bg-slate-800/30 transition flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/20">
+                      {step.isCompleted ? (
+                        <Check className="h-5 w-5 text-emerald-400" />
+                      ) : (
+                        <span className="text-xs font-bold text-sky-400">{step.stepNumber}</span>
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <h4 className={`text-sm font-semibold ${step.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
+                        {step.title}
+                      </h4>
+                      <p className="text-xs text-slate-400 mt-0.5">{step.description}</p>
+                    </div>
+                  </div>
+                  <ChevronRight
+                    className={`h-5 w-5 text-slate-600 transition ${
+                      expandedSteps.includes(step.stepNumber) ? 'rotate-90' : ''
+                    }`}
+                  />
+                </button>
+
+                {/* Subtasks */}
+                {expandedSteps.includes(step.stepNumber) && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="border-t border-slate-700/50 p-4 space-y-3 bg-slate-800/20"
+                  >
+                    {/* Step 1: Business Builder */}
+                    {step.stepNumber === 1 ? (
+                      <Step1BusinessBuilder
+                        launchName={launch?.name || ''}
+                        launchId={launch?.id || ''}
+                        onComplete={() => fetchLaunch()}
+                      />
+                    ) : (
+                      <>
+                        {/* AI Tools Section */}
+                        <div>
+                          <AIToolsGrid
+                            section={stepToSection[step.stepNumber as keyof typeof stepToSection] || 'foundation'}
+                            businessContext={`Business: ${launch?.name}, Industry: ${launch?.industry}, Description: ${launch?.description}`}
+                            title={`AI Tools for ${step.title}`}
+                            showAsButtons={true}
+                          />
+                        </div>
+
+                        {/* Subtasks List */}
+                        <div className="space-y-2">
+                          {step.subtasks.map((subtask) => (
+                            <motion.button
+                              key={subtask.id}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              onClick={() => completeSubtask(step.id, subtask.id)}
+                              className={`w-full flex items-start gap-3 p-3 rounded-md border transition ${
+                                subtask.isCompleted
+                                  ? 'border-emerald-500/20 bg-emerald-500/10 text-slate-400'
+                                  : 'border-slate-700/50 bg-slate-800/40 hover:bg-slate-700/30'
+                              }`}
+                            >
+                              <div className="flex-shrink-0 mt-1">
+                                {subtask.isCompleted ? (
+                                  <div className="flex h-5 w-5 items-center justify-center rounded border border-emerald-500 bg-emerald-500">
+                                    <Check className="h-3 w-3 text-slate-900" />
+                                  </div>
+                                ) : (
+                                  <div className="h-5 w-5 rounded border border-slate-600/50 bg-slate-700/30" />
+                                )}
+                              </div>
+                              <div className="text-left flex-1">
+                                <p className={`text-sm font-medium ${subtask.isCompleted ? 'line-through' : 'text-white'}`}>
+                                  {subtask.title}
+                                </p>
+                                {subtask.aiAssistanceType && (
+                                  <p className="text-xs text-sky-400 mt-1">AI {subtask.aiAssistanceType}</p>
+                                )}
+                              </div>
+                            </motion.button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
 
       {/* Business Assistant Chat */}
       {aiAssistantActive && (
