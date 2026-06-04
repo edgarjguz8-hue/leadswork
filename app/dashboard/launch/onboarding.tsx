@@ -3,65 +3,146 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowRight, Sparkles, ArrowLeft } from 'lucide-react'
+import { Sparkles, ArrowLeft } from 'lucide-react'
 import { BusinessFoundation } from '@/components/business-foundation'
 
 interface BusinessFoundationData {
   businessName: string
-  whatYouSell: string
-  whoYouServe: string
+  domain: string
+  businessDescription: string
+  whoYouServe: string[]
+  whatYouSell: string[]
   revenueModel: string
-  recommendedPricing: string
-  missionStatement: string
-  visionStatement: string
-  elevatorPitch: string
+  pricing: string
+  businessPlanSummary: string
 }
 
-interface OnboardingData {
-  businessIdea: string
-  foundation?: BusinessFoundationData
-  businessType?: string
-  industry?: string
-  description?: string
-  targetMarket?: string
-  businessGoal?: string
+// Mock data generator - creates realistic foundation from business idea
+const generateFoundationFromIdea = (idea: string): BusinessFoundationData => {
+  const lowerIdea = idea.toLowerCase()
+  
+  // Extract key business concept
+  const words = idea.split(' ')
+  const businessType = words.slice(-1)[0] || 'business'
+  
+  // Basic business name generation
+  let businessName = 'Your Business'
+  if (idea.includes('pressure') && idea.includes('wash')) {
+    businessName = 'ProWash Solutions'
+  } else if (idea.includes('cup') || idea.includes('coffee')) {
+    businessName = 'Cup Co'
+  } else if (idea.includes('cleaning')) {
+    businessName = 'CleanPro Services'
+  } else if (idea.includes('consulting')) {
+    businessName = 'ConsultPro'
+  } else {
+    // Generic name from keywords
+    const keyword = words.find(w => w.length > 3) || 'Pro'
+    businessName = keyword.charAt(0).toUpperCase() + keyword.slice(1).toLowerCase() + ' Co'
+  }
+
+  // Generate domain
+  const domain = businessName.toLowerCase().replace(/\s+/g, '') + '.com'
+
+  // Generate business description
+  let businessDescription = `${businessName} is a ${businessType} company dedicated to providing exceptional value to our customers. We focus on delivering high-quality solutions with outstanding customer service.`
+  
+  if (lowerIdea.includes('pressure wash')) {
+    businessDescription = 'ProWash Solutions provides professional pressure washing services for residential and commercial properties. We specialize in keeping properties clean, well-maintained, and protected.'
+  } else if (lowerIdea.includes('cup')) {
+    businessDescription = 'Cup Co creates premium drinkware products designed for everyday use. Our cups combine quality, style, and functionality for customers who value durability and design.'
+  }
+
+  // Generate target audiences
+  let whoYouServe = [
+    'Small to medium-sized businesses',
+    'Individual customers looking for quality',
+    'People who value professional service'
+  ]
+  
+  if (lowerIdea.includes('pressure wash')) {
+    whoYouServe = [
+      'Homeowners who want professional property cleaning',
+      'Small businesses needing maintenance services',
+      'Real estate agents preparing properties'
+    ]
+  } else if (lowerIdea.includes('cup')) {
+    whoYouServe = [
+      'Coffee enthusiasts and daily drinkers',
+      'Corporate buyers for branded merchandise',
+      'Gift-buyers looking for quality products'
+    ]
+  }
+
+  // Generate products/services
+  let whatYouSell = [
+    'Core service or product offering',
+    'Premium or specialized variants',
+    'Maintenance or recurring services'
+  ]
+  
+  if (lowerIdea.includes('pressure wash')) {
+    whatYouSell = [
+      'Residential pressure washing (driveways, patios, home exteriors)',
+      'Commercial property cleaning services',
+      'Monthly maintenance contracts'
+    ]
+  } else if (lowerIdea.includes('cup')) {
+    whatYouSell = [
+      'Custom branded cups and drinkware',
+      'Premium material options (ceramic, stainless steel)',
+      'Bulk orders for corporate clients'
+    ]
+  }
+
+  // Revenue model
+  let revenueModel = 'Direct sales of products or services with opportunities for recurring revenue through maintenance or subscription models.'
+  
+  if (lowerIdea.includes('pressure wash')) {
+    revenueModel = 'Per-job pricing for one-time services, plus recurring monthly maintenance contracts. Higher margins on commercial contracts.'
+  } else if (lowerIdea.includes('cup')) {
+    revenueModel = 'Direct sales to consumers and corporate buyers. Bulk orders generate higher margins. Potential wholesale distribution.'
+  }
+
+  // Pricing
+  let pricing = 'Competitive pricing based on market research, with premium options available.'
+  
+  if (lowerIdea.includes('pressure wash')) {
+    pricing = '$150-$300 for residential jobs, $500-$2,000+ for commercial contracts, and $99-$199/month for maintenance plans.'
+  } else if (lowerIdea.includes('cup')) {
+    pricing = '$15-$30 per unit for retail customers, bulk discounts starting at $8-$12 per unit for corporate orders.'
+  }
+
+  // Business plan summary
+  let businessPlanSummary = `${businessName} will launch with a focus on customer acquisition through digital marketing and local partnerships. We'll prioritize quality and customer service to build a strong reputation. Our first year goals include establishing a solid customer base and refining our operations.`
+  
+  if (lowerIdea.includes('pressure wash')) {
+    businessPlanSummary = 'ProWash will start with residential customers in the local area, leveraging online reviews and word-of-mouth marketing. We\'ll build a team and invest in professional equipment. By month 6, we\'ll pursue commercial contracts which have higher margins and more stable recurring revenue.'
+  } else if (lowerIdea.includes('cup')) {
+    businessPlanSummary = 'Cup Co will launch with an e-commerce store and approach corporate buyers for bulk orders. We\'ll invest in high-quality materials and design. Strategic partnerships with influencers in the coffee space will drive awareness. Year 1 focuses on building a loyal customer base and establishing our brand.'
+  }
+
+  return {
+    businessName,
+    domain,
+    businessDescription,
+    whoYouServe,
+    whatYouSell,
+    revenueModel,
+    pricing,
+    businessPlanSummary,
+  }
 }
 
 export function LaunchOnboarding() {
   const router = useRouter()
-  const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
-  const [data, setData] = useState<OnboardingData>({
-    businessIdea: '',
-  })
+  const [businessIdea, setBusinessIdea] = useState('')
   const [generatedFoundation, setGeneratedFoundation] = useState<BusinessFoundationData | null>(null)
-  const [foundationApproved, setFoundationApproved] = useState(false)
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setData(prev => ({ ...prev, [name]: value }))
-  }
-
-  // Generate foundation from business idea
-  const generateFoundation = () => {
-    const idea = data.businessIdea.trim()
-    if (!idea) return
-
-    // Extract key words for context
-    const words = idea.toLowerCase().split(' ')
-    
-    // Simple mock generation based on business idea
-    const foundation: BusinessFoundationData = {
-      businessName: idea.split(' ').slice(0, 2).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'My Business',
-      whatYouSell: `Professional ${idea.toLowerCase()} services designed to solve real problems for customers`,
-      whoYouServe: 'Small to medium-sized businesses and individual customers looking for quality solutions',
-      revenueModel: 'Service-based revenue with potential for recurring contracts and upsells',
-      recommendedPricing: '$100-$500 per service depending on scope and market conditions',
-      missionStatement: `We help customers succeed by providing exceptional ${idea.toLowerCase()} services.`,
-      visionStatement: `To become the trusted leader in ${idea.toLowerCase()} within our market.`,
-      elevatorPitch: `We provide high-quality ${idea.toLowerCase()} that helps customers achieve their goals efficiently and affordably.`,
-    }
-
+  const handleGenerateFoundation = () => {
+    if (!businessIdea.trim()) return
+    const foundation = generateFoundationFromIdea(businessIdea)
     setGeneratedFoundation(foundation)
   }
 
@@ -70,19 +151,16 @@ export function LaunchOnboarding() {
 
     setLoading(true)
     try {
-      // Create launch with foundation data
       const launchData = {
         businessName: generatedFoundation.businessName,
         businessType: 'service',
-        industry: 'General Services',
-        description: generatedFoundation.whatYouSell,
-        targetMarket: generatedFoundation.whoYouServe,
-        businessGoal: generatedFoundation.elevatorPitch,
+        industry: 'Professional Services',
+        description: generatedFoundation.businessDescription,
+        targetMarket: generatedFoundation.whoYouServe.join(', '),
+        businessGoal: generatedFoundation.businessPlanSummary,
         foundationData: generatedFoundation,
       }
 
-      console.log('[v0] Submitting launch with foundation:', launchData)
-      
       const response = await fetch('/api/launch/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -91,15 +169,13 @@ export function LaunchOnboarding() {
 
       if (response.ok) {
         const result = await response.json()
-        console.log('[v0] Launch created successfully:', result)
         router.push(`/dashboard/launch/${result.launchId}`)
       } else {
         const errorText = await response.text()
-        console.error('[v0] Onboarding API error:', response.status, errorText)
         alert(`Error: ${errorText || 'Failed to create launch'}`)
       }
     } catch (error) {
-      console.error('[v0] Onboarding submission error:', error)
+      console.error('Onboarding submission error:', error)
       alert('Error submitting form. Please try again.')
     } finally {
       setLoading(false)
@@ -107,9 +183,8 @@ export function LaunchOnboarding() {
   }
 
   const handleRegenerateFoundation = () => {
-    // In a real app, this would call an AI API
-    // For now, we'll just regenerate with slight variations
-    generateFoundation()
+    const newFoundation = generateFoundationFromIdea(businessIdea)
+    setGeneratedFoundation(newFoundation)
   }
 
   const handleEditIdea = () => {
@@ -132,7 +207,7 @@ export function LaunchOnboarding() {
           <p className="text-slate-400">
             {generatedFoundation 
               ? 'Review your business foundation'
-              : 'Step 1 of 5 - Tell us your business idea'}
+              : 'Step 1 - Business Foundation - Tell us your idea. LeadsWork will build the foundation of your business.'}
           </p>
         </div>
 
@@ -149,55 +224,38 @@ export function LaunchOnboarding() {
         {/* Form Content */}
         {!generatedFoundation ? (
           <motion.div
-            key="step1"
+            key="input"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur"
+            className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur space-y-6"
           >
-            <div className="space-y-6">
-              <div>
-                <label className="block text-lg font-semibold text-white mb-3">
-                  What business would you like to build?
-                </label>
-                <p className="text-sm text-slate-400 mb-4">
-                  Describe your business idea in one sentence. For example: &quot;I want to start a pressure washing company.&quot;
-                </p>
-                <textarea
-                  name="businessIdea"
-                  value={data.businessIdea}
-                  onChange={handleInputChange}
-                  placeholder="I want to start a..."
-                  rows={3}
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition resize-none"
-                />
-              </div>
-
-              <div className="rounded-lg border border-sky-400/30 bg-sky-400/10 p-4">
-                <p className="text-sm text-sky-300">
-                  ✨ Once you submit, we&apos;ll automatically generate your complete business foundation including name, mission, vision, pricing, and more.
-                </p>
-              </div>
+            <div>
+              <label className="block text-lg font-semibold text-white mb-3">
+                What business do you want to build?
+              </label>
+              <textarea
+                value={businessIdea}
+                onChange={(e) => setBusinessIdea(e.target.value)}
+                placeholder="I want to start a cup company."
+                rows={3}
+                className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition resize-none"
+              />
             </div>
 
             {/* Buttons */}
-            <div className="mt-8 flex gap-3">
+            <div className="flex gap-3">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="flex-1 rounded-lg border border-white/10 px-6 py-3 text-sm font-medium text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                className="flex-1 rounded-lg border border-white/10 px-6 py-3 text-sm font-medium text-white hover:bg-white/5 transition"
               >
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  if (data.businessIdea.trim()) {
-                    generateFoundation()
-                  }
-                }}
-                disabled={!data.businessIdea.trim() || loading}
-                className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] hover:bg-sky-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                onClick={handleGenerateFoundation}
+                disabled={!businessIdea.trim() || loading}
+                className="flex-1 rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] hover:bg-sky-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
-                Build My Business {loading && <Sparkles className="h-4 w-4 animate-spin" />}
+                Build My Foundation
               </button>
             </div>
           </motion.div>
@@ -206,23 +264,18 @@ export function LaunchOnboarding() {
             key="foundation"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
           >
             <BusinessFoundation
               data={generatedFoundation}
-              isApproved={foundationApproved}
               isLoading={loading}
-              onApprove={() => {
-                setFoundationApproved(true)
-                handleApproveFoundation()
-              }}
+              onApprove={handleApproveFoundation}
               onRegenerate={handleRegenerateFoundation}
               onEditIdea={handleEditIdea}
             />
 
-            {/* Back Button */}
+            {/* Back to Edit Button */}
             <button
-              onClick={() => setGeneratedFoundation(null)}
+              onClick={handleEditIdea}
               className="mt-4 flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-slate-400 hover:text-white hover:border-sky-400/30 transition mx-auto"
             >
               <ArrowLeft className="h-4 w-4" />

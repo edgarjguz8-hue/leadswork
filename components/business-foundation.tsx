@@ -1,88 +1,37 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, RotateCcw, Edit2, Check, AlertCircle } from 'lucide-react'
+import { RotateCcw, Check } from 'lucide-react'
 
 interface BusinessFoundationData {
   businessName: string
-  whatYouSell: string
-  whoYouServe: string
+  domain: string
+  businessDescription: string
+  whoYouServe: string[] // bullet list
+  whatYouSell: string[] // bullet list
   revenueModel: string
-  recommendedPricing: string
-  missionStatement: string
-  visionStatement: string
-  elevatorPitch: string
+  pricing: string
+  businessPlanSummary: string
 }
 
 interface BusinessFoundationProps {
+  data?: BusinessFoundationData
+  isApproved?: boolean
+  isLoading?: boolean
   onApprove: () => void
   onRegenerate: () => void
   onEditIdea: () => void
-  data?: Partial<BusinessFoundationData>
-  isApproved?: boolean
-  isLoading?: boolean
-}
-
-// Mock data generator for foundation
-const generateMockFoundation = (businessIdea: string): BusinessFoundationData => {
-  // Extract key words from the business idea for context
-  const words = businessIdea.toLowerCase().split(' ')
-  const hasService = words.some(w => ['service', 'pressure', 'cleaning', 'washing'].includes(w))
-  const hasProduct = words.some(w => ['product', 'sell', 'make', 'create'].includes(w))
-  
-  if (businessIdea.toLowerCase().includes('pressure washing')) {
-    return {
-      businessName: 'ProWash Solutions',
-      whatYouSell: 'Professional pressure washing services for residential and commercial properties',
-      whoYouServe: 'Homeowners and small businesses needing property cleaning services',
-      revenueModel: 'Service-based recurring contracts with one-time and monthly maintenance plans',
-      recommendedPricing: '$150-$300 per residential job, $500-$2000+ for commercial contracts',
-      missionStatement: 'We make properties spotless and well-maintained, protecting your investment.',
-      visionStatement: 'To become the most trusted and reliable pressure washing service in the region.',
-      elevatorPitch: 'ProWash Solutions provides eco-friendly pressure washing that keeps your property looking new. From driveways to commercial buildings, we deliver professional results at competitive prices.',
-    }
-  }
-  
-  // Generic fallback
-  return {
-    businessName: 'Your Business Name',
-    whatYouSell: 'Description of your main product or service offering',
-    whoYouServe: 'Target customer profile and ideal client description',
-    revenueModel: 'How your business generates revenue and monetization strategy',
-    recommendedPricing: 'Recommended price point based on market research and value delivery',
-    missionStatement: 'Your statement of purpose and core values',
-    visionStatement: 'Your long-term vision for what the business will become',
-    elevatorPitch: 'A concise 2-3 sentence summary of your business that hooks potential customers',
-  }
 }
 
 export function BusinessFoundation({
-  onApprove,
-  onRegenerate,
-  onEditIdea,
   data,
   isApproved = false,
   isLoading = false,
+  onApprove,
+  onRegenerate,
+  onEditIdea,
 }: BusinessFoundationProps) {
-  const [foundation, setFoundation] = useState<BusinessFoundationData>(
-    data as BusinessFoundationData || {
-      businessName: '',
-      whatYouSell: '',
-      whoYouServe: '',
-      revenueModel: '',
-      recommendedPricing: '',
-      missionStatement: '',
-      visionStatement: '',
-      elevatorPitch: '',
-    }
-  )
-  const [isEditing, setIsEditing] = useState(false)
-
-  const handleRegenerate = () => {
-    onRegenerate()
-  }
-
   if (isApproved) {
     return (
       <motion.div
@@ -95,7 +44,7 @@ export function BusinessFoundation({
           <div>
             <h3 className="font-semibold text-white">Business Foundation Approved</h3>
             <p className="text-sm text-slate-400 mt-1">
-              Your business foundation has been saved. You&apos;re ready to move on to Step 2.
+              Your business foundation is ready. Move to Step 2 to continue building your launch plan.
             </p>
           </div>
         </div>
@@ -103,16 +52,9 @@ export function BusinessFoundation({
     )
   }
 
-  const foundationItems = [
-    { label: 'Business Name', key: 'businessName' as const },
-    { label: 'What You Sell', key: 'whatYouSell' as const },
-    { label: 'Who You Serve', key: 'whoYouServe' as const },
-    { label: 'Revenue Model', key: 'revenueModel' as const },
-    { label: 'Recommended Pricing', key: 'recommendedPricing' as const },
-    { label: 'Mission Statement', key: 'missionStatement' as const },
-    { label: 'Vision Statement', key: 'visionStatement' as const },
-    { label: 'Elevator Pitch', key: 'elevatorPitch' as const },
-  ]
+  if (!data) {
+    return null
+  }
 
   return (
     <motion.div
@@ -120,105 +62,114 @@ export function BusinessFoundation({
       animate={{ opacity: 1, y: 0 }}
       className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden backdrop-blur"
     >
-      {/* Header */}
-      <div className="border-b border-white/10 bg-white/[0.02] px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-white">Business Foundation</h2>
-            <p className="text-sm text-slate-400 mt-1">
-              Your complete business foundation automatically generated
-            </p>
-          </div>
-          {!isEditing && (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:border-sky-400/30 transition"
-            >
-              <Edit2 className="h-4 w-4" />
-              Edit
-            </button>
-          )}
+      {/* Content - Single Vertical Card */}
+      <div className="p-8 space-y-8">
+        {/* Business Name */}
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400 mb-2">
+            Business Name
+          </h3>
+          <p className="text-2xl font-bold text-white">{data.businessName}</p>
+        </div>
+
+        {/* Domain */}
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400 mb-2">
+            Recommended Domain
+          </h3>
+          <p className="text-base text-white">{data.domain}</p>
+        </div>
+
+        {/* Business Description */}
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400 mb-2">
+            Business Description
+          </h3>
+          <p className="text-base text-white leading-relaxed">{data.businessDescription}</p>
+        </div>
+
+        {/* Who You Serve */}
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400 mb-3">
+            Who You Serve
+          </h3>
+          <ul className="space-y-2">
+            {data.whoYouServe.map((item, idx) => (
+              <li key={idx} className="flex items-start gap-3">
+                <span className="text-sky-400 font-semibold mt-0.5">•</span>
+                <span className="text-white">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* What You Sell */}
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400 mb-3">
+            What You Sell
+          </h3>
+          <ul className="space-y-2">
+            {data.whatYouSell.map((item, idx) => (
+              <li key={idx} className="flex items-start gap-3">
+                <span className="text-sky-400 font-semibold mt-0.5">•</span>
+                <span className="text-white">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Revenue Model */}
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400 mb-2">
+            Revenue Model
+          </h3>
+          <p className="text-base text-white">{data.revenueModel}</p>
+        </div>
+
+        {/* Pricing */}
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400 mb-2">
+            Pricing
+          </h3>
+          <p className="text-base text-white">{data.pricing}</p>
+        </div>
+
+        {/* Business Plan Summary */}
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400 mb-2">
+            Business Plan Summary
+          </h3>
+          <p className="text-base text-white leading-relaxed">{data.businessPlanSummary}</p>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-6">
-        {isEditing ? (
-          <div className="space-y-4">
-            {foundationItems.map((item) => (
-              <div key={item.key}>
-                <label className="block text-sm font-medium text-white mb-2">
-                  {item.label}
-                </label>
-                <textarea
-                  value={foundation[item.key]}
-                  onChange={(e) =>
-                    setFoundation(prev => ({
-                      ...prev,
-                      [item.key]: e.target.value,
-                    }))
-                  }
-                  rows={item.key === 'businessName' ? 1 : 2}
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition resize-none"
-                />
-              </div>
-            ))}
-            <button
-              onClick={() => setIsEditing(false)}
-              className="w-full rounded-lg bg-sky-400 px-4 py-2 text-sm font-medium text-[#0a1220] hover:bg-sky-300 transition"
-            >
-              Done Editing
-            </button>
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2">
-            {foundationItems.map((item) => (
-              <motion.div
-                key={item.key}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-lg border border-white/10 bg-white/[0.03] p-4 hover:border-sky-400/20 transition"
-              >
-                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">
-                  {item.label}
-                </p>
-                <p className="text-sm text-white whitespace-pre-wrap">
-                  {foundation[item.key] || 'Not set'}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Divider */}
+      <div className="border-t border-white/10" />
 
       {/* Actions */}
-      {!isEditing && (
-        <div className="border-t border-white/10 bg-white/[0.02] px-6 py-4">
-          <div className="flex gap-3">
-            <button
-              onClick={handleRegenerate}
-              disabled={isLoading}
-              className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-medium text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              <RotateCcw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              Regenerate Foundation
-            </button>
-            <button
-              onClick={onEditIdea}
-              className="flex-1 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-medium text-white hover:bg-white/5 transition"
-            >
-              Edit Business Idea
-            </button>
-            <button
-              onClick={onApprove}
-              disabled={isLoading}
-              className="flex-1 rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              Approve Foundation
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="px-8 py-6 bg-white/[0.02] flex gap-3">
+        <button
+          onClick={onApprove}
+          disabled={isLoading}
+          className="flex-1 rounded-lg bg-emerald-500 px-4 py-3 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          Approve Foundation
+        </button>
+        <button
+          onClick={onRegenerate}
+          disabled={isLoading}
+          className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-3 text-sm font-medium text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          <RotateCcw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          Regenerate
+        </button>
+        <button
+          onClick={onEditIdea}
+          className="flex-1 rounded-lg border border-white/10 px-4 py-3 text-sm font-medium text-white hover:bg-white/5 transition"
+        >
+          Edit Idea
+        </button>
+      </div>
     </motion.div>
   )
 }

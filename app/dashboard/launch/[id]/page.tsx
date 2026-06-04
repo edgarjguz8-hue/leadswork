@@ -43,13 +43,13 @@ interface Launch {
   steps: Step[]
   foundationData?: {
     businessName: string
-    whatYouSell: string
-    whoYouServe: string
+    domain: string
+    businessDescription: string
+    whoYouServe: string[]
+    whatYouSell: string[]
     revenueModel: string
-    recommendedPricing: string
-    missionStatement: string
-    visionStatement: string
-    elevatorPitch: string
+    pricing: string
+    businessPlanSummary: string
   }
 }
 
