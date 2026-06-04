@@ -10,6 +10,7 @@ import {
   Sparkles,
   Check,
   Lock,
+  Trash2,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { AIToolsGrid } from '@/components/AIToolsGrid'
@@ -61,6 +62,8 @@ export default function LaunchDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [expandedSteps, setExpandedSteps] = useState<number[]>([1])
   const [aiAssistantActive, setAiAssistantActive] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!session?.user) {
@@ -136,6 +139,29 @@ export default function LaunchDashboard() {
     }
   }
 
+  const handleDeleteLaunch = async () => {
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/launch/${params.id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        console.log('[v0] Launch deleted successfully')
+        router.push('/dashboard/launch')
+      } else {
+        console.error('[v0] Failed to delete launch:', response.status)
+        alert('Failed to delete launch. Please try again.')
+      }
+    } catch (error) {
+      console.error('[v0] Error deleting launch:', error)
+      alert('Error deleting launch. Please try again.')
+    } finally {
+      setDeleting(false)
+      setShowDeleteDialog(false)
+    }
+  }
+
   if (isPending || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a1220]">
@@ -179,12 +205,21 @@ export default function LaunchDashboard() {
             </button>
             <h1 className="text-xl font-semibold text-white">{launch.name}</h1>
           </div>
-          <button
-            onClick={() => signOut()}
-            className="flex items-center gap-2 text-slate-400 hover:text-white transition"
-          >
-            <LogOut className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowDeleteDialog(true)}
+              className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition"
+              title="Delete launch"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => signOut()}
+              className="flex items-center gap-2 text-slate-400 hover:text-white transition"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -422,6 +457,48 @@ export default function LaunchDashboard() {
           ))}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-lg border border-white/10 bg-[#0a1220] p-6 max-w-md w-full mx-4"
+          >
+            <h2 className="text-lg font-semibold text-white mb-2">Delete Launch?</h2>
+            <p className="text-slate-400 text-sm mb-6">
+              Are you sure you want to delete "{launch.name}"? This action cannot be undone and will delete all progress and data associated with this launch.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteDialog(false)}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg border border-white/10 text-white hover:bg-white/[0.05] transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteLaunch}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <span className="h-4 w-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }

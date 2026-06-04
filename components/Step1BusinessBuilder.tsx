@@ -47,6 +47,7 @@ export function Step1BusinessBuilder({ launchName, launchId, onComplete }: Step1
   const [generatedIdeas, setGeneratedIdeas] = useState<BusinessIdea[]>([])
   const [loading, setLoading] = useState(false)
   const [businessFoundation, setBusinessFoundation] = useState<BusinessFoundation | null>(null)
+  const [savingData, setSavingData] = useState(false)
 
   const generateIdeas = async () => {
     if (!selectedCategory) return
@@ -99,6 +100,40 @@ export function Step1BusinessBuilder({ launchName, launchId, onComplete }: Step1
       console.error('[v0] Failed to generate business foundation:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSaveAndContinue = async () => {
+    if (!businessFoundation) return
+
+    setSavingData(true)
+    try {
+      const response = await fetch('/api/launch/update-step1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          launchId,
+          businessData: {
+            businessName: businessFoundation.businessName,
+            description: businessFoundation.description,
+            businessType: selectedCategory,
+            whatYouSell: businessFoundation.whatYouSell,
+            whoYouServe: businessFoundation.whoYouServe,
+            revenueModel: businessFoundation.revenueModel,
+          },
+        }),
+      })
+
+      if (response.ok) {
+        console.log('[v0] Step 1 data saved successfully')
+        onComplete(businessFoundation)
+      } else {
+        console.error('[v0] Failed to save Step 1 data:', response.status)
+      }
+    } catch (error) {
+      console.error('[v0] Error saving Step 1 data:', error)
+    } finally {
+      setSavingData(false)
     }
   }
 
@@ -369,10 +404,11 @@ export function Step1BusinessBuilder({ launchName, launchId, onComplete }: Step1
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onComplete(businessFoundation)}
-              className="mt-8 w-full rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] hover:bg-sky-300 transition"
+              onClick={handleSaveAndContinue}
+              disabled={savingData}
+              className="mt-8 w-full rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] hover:bg-sky-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-              Continue to Next Step
+              {savingData ? 'Saving...' : 'Continue to Next Step'}
             </motion.button>
           </div>
         </motion.div>
