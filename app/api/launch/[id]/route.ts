@@ -68,3 +68,43 @@ export async function GET(
     return Response.json({ error: 'Failed to fetch launch' }, { status: 500 })
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const resolvedParams = await params
+    const launchId = resolvedParams.id
+
+    console.log('[v0] Deleting launch:', launchId)
+
+    const session = await auth.api.getSession({ headers: await headers() })
+    if (!session?.user) {
+      console.log('[v0] Unauthorized - no session')
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Verify the launch belongs to the user
+    const launch = await db.query.businessLaunch.findFirst({
+      where: and(
+        eq(businessLaunch.id, launchId),
+        eq(businessLaunch.userId, session.user.id)
+      ),
+    })
+
+    if (!launch) {
+      console.log('[v0] Launch not found:', launchId)
+      return Response.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    // Delete the launch (cascade will handle related records)
+    await db.delete(businessLaunch).where(eq(businessLaunch.id, launchId))
+
+    console.log('[v0] Launch deleted successfully:', launchId)
+    return Response.json({ success: true, message: 'Launch deleted' })
+  } catch (error) {
+    console.error('[v0] Failed to delete launch:', error)
+    return Response.json({ error: 'Failed to delete launch' }, { status: 500 })
+  }
+}
