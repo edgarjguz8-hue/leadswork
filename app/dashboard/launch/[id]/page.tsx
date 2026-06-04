@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { AIToolsGrid } from '@/components/AIToolsGrid'
+import { BusinessFoundation } from '@/components/business-foundation'
 
 interface Step {
   id: string
@@ -40,6 +41,16 @@ interface Launch {
   progress: number
   description: string
   steps: Step[]
+  foundationData?: {
+    businessName: string
+    whatYouSell: string
+    whoYouServe: string
+    revenueModel: string
+    recommendedPricing: string
+    missionStatement: string
+    visionStatement: string
+    elevatorPitch: string
+  }
 }
 
 // Map step numbers to section keys for AI tools
@@ -60,6 +71,7 @@ export default function LaunchDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [expandedSteps, setExpandedSteps] = useState<number[]>([1])
   const [aiAssistantActive, setAiAssistantActive] = useState(false)
+  const [foundationApproved, setFoundationApproved] = useState(false)
 
   useEffect(() => {
     if (!session?.user) {
@@ -132,6 +144,24 @@ export default function LaunchDashboard() {
       }
     } catch (error) {
       console.error('Failed to complete subtask:', error)
+    }
+  }
+
+  const handleApproveFoundation = async () => {
+    try {
+      setLoading(true)
+      // Mark Step 1 as complete
+      if (launch && launch.steps.length > 0) {
+        const step1 = launch.steps[0]
+        // In a real scenario, we'd call an API to mark the step as complete
+        // For now, we'll just update the UI state
+        setFoundationApproved(true)
+        await fetchLaunch()
+      }
+    } catch (error) {
+      console.error('Failed to approve foundation:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -347,63 +377,83 @@ export default function LaunchDashboard() {
                 />
               </button>
 
-              {/* Subtasks */}
+              {/* Step Content */}
               {expandedSteps.includes(step.stepNumber) && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="border-t border-white/10 p-6 space-y-6"
+                  className="border-t border-white/10 p-6"
                 >
-                  {/* AI Tools Section */}
-                  <div>
-                    <AIToolsGrid
-                      section={stepToSection[step.stepNumber as keyof typeof stepToSection] || 'foundation'}
-                      businessContext={`Business: ${launch.name}, Industry: ${launch.industry}, Description: ${launch.description}`}
-                      title={`AI Tools for ${step.title}`}
-                      showAsButtons={true}
+                  {/* Step 1: Business Foundation */}
+                  {step.stepNumber === 1 ? (
+                    <BusinessFoundation
+                      data={launch.foundationData}
+                      isApproved={step.isCompleted}
+                      isLoading={loading}
+                      onApprove={handleApproveFoundation}
+                      onRegenerate={() => {
+                        // In a real app, this would call an API to regenerate
+                        console.log('[v0] Regenerating foundation')
+                      }}
+                      onEditIdea={() => {
+                        // In a real app, this would allow editing the business idea
+                        console.log('[v0] Editing business idea')
+                      }}
                     />
-                  </div>
+                  ) : (
+                    <>
+                      {/* AI Tools Section */}
+                      <div>
+                        <AIToolsGrid
+                          section={stepToSection[step.stepNumber as keyof typeof stepToSection] || 'foundation'}
+                          businessContext={`Business: ${launch.name}, Industry: ${launch.industry}, Description: ${launch.description}`}
+                          title={`AI Tools for ${step.title}`}
+                          showAsButtons={true}
+                        />
+                      </div>
 
-                  {/* Divider */}
-                  <div className="border-t border-white/10" />
+                      {/* Divider */}
+                      <div className="border-t border-white/10 my-6" />
 
-                  {/* Subtasks List */}
-                  <div className="space-y-3">
-                    {step.subtasks.map((subtask) => (
-                      <motion.div
-                        key={subtask.id}
-                        initial={{ opacity: 0, x: -12 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className={`flex items-start gap-3 p-4 rounded-lg border ${
-                          subtask.isCompleted
-                            ? 'border-emerald-400/20 bg-emerald-400/5'
-                            : 'border-white/10 bg-white/[0.02] hover:border-sky-400/20'
-                        } transition group cursor-pointer`}
-                        onClick={() => completeSubtask(step.id, subtask.id)}
-                      >
-                        <motion.div
-                          initial={{ scale: 0.8 }}
-                          animate={{ scale: 1 }}
-                          className={`flex h-6 w-6 items-center justify-center rounded border flex-shrink-0 mt-0.5 ${
-                            subtask.isCompleted
-                              ? 'bg-emerald-400 border-emerald-400'
-                              : 'border-white/20 group-hover:border-sky-400'
-                          } transition`}
-                        >
-                          {subtask.isCompleted && <Check className="h-4 w-4 text-[#0a1220]" />}
-                        </motion.div>
-                        <div className="flex-1">
-                          <p className={`text-sm font-medium ${subtask.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
-                            {subtask.title}
-                          </p>
-                          {subtask.aiAssistanceType && (
-                            <p className="text-xs text-sky-400 mt-1">AI {subtask.aiAssistanceType} available</p>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
+                      {/* Subtasks List */}
+                      <div className="space-y-3">
+                        {step.subtasks.map((subtask) => (
+                          <motion.div
+                            key={subtask.id}
+                            initial={{ opacity: 0, x: -12 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className={`flex items-start gap-3 p-4 rounded-lg border ${
+                              subtask.isCompleted
+                                ? 'border-emerald-400/20 bg-emerald-400/5'
+                                : 'border-white/10 bg-white/[0.02] hover:border-sky-400/20'
+                            } transition group cursor-pointer`}
+                            onClick={() => completeSubtask(step.id, subtask.id)}
+                          >
+                            <motion.div
+                              initial={{ scale: 0.8 }}
+                              animate={{ scale: 1 }}
+                              className={`flex h-6 w-6 items-center justify-center rounded border flex-shrink-0 mt-0.5 ${
+                                subtask.isCompleted
+                                  ? 'bg-emerald-400 border-emerald-400'
+                                  : 'border-white/20 group-hover:border-sky-400'
+                              } transition`}
+                            >
+                              {subtask.isCompleted && <Check className="h-4 w-4 text-[#0a1220]" />}
+                            </motion.div>
+                            <div className="flex-1">
+                              <p className={`text-sm font-medium ${subtask.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
+                                {subtask.title}
+                              </p>
+                              {subtask.aiAssistanceType && (
+                                <p className="text-xs text-sky-400 mt-1">AI {subtask.aiAssistanceType} available</p>
+                              )}
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </motion.div>
               )}
             </motion.div>

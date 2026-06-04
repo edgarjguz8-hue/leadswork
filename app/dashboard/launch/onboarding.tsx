@@ -3,15 +3,28 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowRight, Sparkles, ArrowLeft } from 'lucide-react'
+import { BusinessFoundation } from '@/components/business-foundation'
+
+interface BusinessFoundationData {
+  businessName: string
+  whatYouSell: string
+  whoYouServe: string
+  revenueModel: string
+  recommendedPricing: string
+  missionStatement: string
+  visionStatement: string
+  elevatorPitch: string
+}
 
 interface OnboardingData {
-  businessName: string
-  businessType: string
-  industry: string
-  description: string
-  targetMarket: string
-  businessGoal: string
+  businessIdea: string
+  foundation?: BusinessFoundationData
+  businessType?: string
+  industry?: string
+  description?: string
+  targetMarket?: string
+  businessGoal?: string
 }
 
 export function LaunchOnboarding() {
@@ -19,68 +32,66 @@ export function LaunchOnboarding() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<OnboardingData>({
-    businessName: '',
-    businessType: '',
-    industry: '',
-    description: '',
-    targetMarket: '',
-    businessGoal: '',
+    businessIdea: '',
   })
+  const [generatedFoundation, setGeneratedFoundation] = useState<BusinessFoundationData | null>(null)
+  const [foundationApproved, setFoundationApproved] = useState(false)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleNext = () => {
-    if (step < 4) {
-      setStep(step + 1)
-    } else {
-      submitOnboarding()
-    }
-  }
+  // Generate foundation from business idea
+  const generateFoundation = () => {
+    const idea = data.businessIdea.trim()
+    if (!idea) return
 
-  const handleBack = () => {
-    if (step > 1) {
-      setStep(step - 1)
-    }
-  }
-
-  const getButtonDisabled = () => {
-    if (loading) return true
+    // Extract key words for context
+    const words = idea.toLowerCase().split(' ')
     
-    // On each step, check the required fields for that step
-    switch (step) {
-      case 1:
-        return !data.businessName || !data.businessType
-      case 2:
-        return !data.industry || !data.description
-      case 3:
-        return !data.targetMarket || !data.businessGoal
-      case 4:
-        // Review step - button should never be disabled
-        return false
-      default:
-        return false
+    // Simple mock generation based on business idea
+    const foundation: BusinessFoundationData = {
+      businessName: idea.split(' ').slice(0, 2).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'My Business',
+      whatYouSell: `Professional ${idea.toLowerCase()} services designed to solve real problems for customers`,
+      whoYouServe: 'Small to medium-sized businesses and individual customers looking for quality solutions',
+      revenueModel: 'Service-based revenue with potential for recurring contracts and upsells',
+      recommendedPricing: '$100-$500 per service depending on scope and market conditions',
+      missionStatement: `We help customers succeed by providing exceptional ${idea.toLowerCase()} services.`,
+      visionStatement: `To become the trusted leader in ${idea.toLowerCase()} within our market.`,
+      elevatorPitch: `We provide high-quality ${idea.toLowerCase()} that helps customers achieve their goals efficiently and affordably.`,
     }
+
+    setGeneratedFoundation(foundation)
   }
 
-  const submitOnboarding = async () => {
+  const handleApproveFoundation = async () => {
+    if (!generatedFoundation) return
+
     setLoading(true)
     try {
-      console.log('[v0] Submitting onboarding data:', data)
+      // Create launch with foundation data
+      const launchData = {
+        businessName: generatedFoundation.businessName,
+        businessType: 'service',
+        industry: 'General Services',
+        description: generatedFoundation.whatYouSell,
+        targetMarket: generatedFoundation.whoYouServe,
+        businessGoal: generatedFoundation.elevatorPitch,
+        foundationData: generatedFoundation,
+      }
+
+      console.log('[v0] Submitting launch with foundation:', launchData)
+      
       const response = await fetch('/api/launch/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(launchData),
       })
 
-      console.log('[v0] API response status:', response.status)
-      
       if (response.ok) {
         const result = await response.json()
         console.log('[v0] Launch created successfully:', result)
-        console.log('[v0] Redirecting to:', `/dashboard/launch/${result.launchId}`)
         router.push(`/dashboard/launch/${result.launchId}`)
       } else {
         const errorText = await response.text()
@@ -95,12 +106,22 @@ export function LaunchOnboarding() {
     }
   }
 
+  const handleRegenerateFoundation = () => {
+    // In a real app, this would call an AI API
+    // For now, we'll just regenerate with slight variations
+    generateFoundation()
+  }
+
+  const handleEditIdea = () => {
+    setGeneratedFoundation(null)
+  }
+
   return (
     <div className="min-h-screen bg-[#0a1220] flex items-center justify-center px-6 py-12">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-2xl"
+        className="w-full max-w-3xl"
       >
         {/* Header */}
         <div className="mb-12 text-center">
@@ -108,7 +129,11 @@ export function LaunchOnboarding() {
             <Sparkles className="h-6 w-6 text-sky-400" />
             <h1 className="text-4xl font-bold text-white">Start Your Business Launch</h1>
           </div>
-          <p className="text-slate-400">Step {step} of 4 - Tell us about your business idea</p>
+          <p className="text-slate-400">
+            {generatedFoundation 
+              ? 'Review your business foundation'
+              : 'Step 1 of 5 - Tell us your business idea'}
+          </p>
         </div>
 
         {/* Progress Bar */}
@@ -116,157 +141,95 @@ export function LaunchOnboarding() {
           <motion.div
             className="h-full bg-sky-400"
             initial={{ width: 0 }}
-            animate={{ width: `${(step / 4) * 100}%` }}
+            animate={{ width: `${generatedFoundation ? 20 : 10}%` }}
             transition={{ duration: 0.3 }}
           />
         </div>
 
         {/* Form Content */}
-        <motion.div
-          key={step}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur"
-        >
-          {step === 1 && (
+        {!generatedFoundation ? (
+          <motion.div
+            key="step1"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur"
+          >
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-white mb-2">Business Name</label>
-                <input
-                  type="text"
-                  name="businessName"
-                  value={data.businessName}
-                  onChange={handleInputChange}
-                  placeholder="What's your business called?"
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Business Type</label>
-                <select
-                  name="businessType"
-                  value={data.businessType}
-                  onChange={handleInputChange}
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white focus:border-sky-400 focus:outline-none transition"
-                >
-                  <option value="">Select a type...</option>
-                  <option value="service">Service Business</option>
-                  <option value="product">Product Business</option>
-                  <option value="saas">SaaS</option>
-                  <option value="ecommerce">E-commerce</option>
-                  <option value="consulting">Consulting</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Industry</label>
-                <input
-                  type="text"
-                  name="industry"
-                  value={data.industry}
-                  onChange={handleInputChange}
-                  placeholder="What industry is your business in?"
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Business Description</label>
+                <label className="block text-lg font-semibold text-white mb-3">
+                  What business would you like to build?
+                </label>
+                <p className="text-sm text-slate-400 mb-4">
+                  Describe your business idea in one sentence. For example: &quot;I want to start a pressure washing company.&quot;
+                </p>
                 <textarea
-                  name="description"
-                  value={data.description}
+                  name="businessIdea"
+                  value={data.businessIdea}
                   onChange={handleInputChange}
-                  placeholder="Describe what your business does..."
-                  rows={4}
+                  placeholder="I want to start a..."
+                  rows={3}
                   className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition resize-none"
                 />
               </div>
-            </div>
-          )}
 
-          {step === 3 && (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Target Market</label>
-                <input
-                  type="text"
-                  name="targetMarket"
-                  value={data.targetMarket}
-                  onChange={handleInputChange}
-                  placeholder="Who is your ideal customer?"
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">What problem do you solve?</label>
-                <textarea
-                  name="businessGoal"
-                  value={data.businessGoal}
-                  onChange={handleInputChange}
-                  placeholder="What's the main problem your business solves?"
-                  rows={4}
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition resize-none"
-                />
+              <div className="rounded-lg border border-sky-400/30 bg-sky-400/10 p-4">
+                <p className="text-sm text-sky-300">
+                  ✨ Once you submit, we&apos;ll automatically generate your complete business foundation including name, mission, vision, pricing, and more.
+                </p>
               </div>
             </div>
-          )}
 
-          {step === 4 && (
-            <div className="space-y-6">
-              <div className="rounded-lg border border-sky-400/30 bg-sky-400/10 p-6">
-                <h3 className="font-semibold text-white mb-4">Review Your Information</h3>
-                <div className="space-y-3 text-sm">
-                  <div>
-                    <p className="text-slate-400">Business Name</p>
-                    <p className="text-white font-medium">{data.businessName}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-400">Business Type</p>
-                    <p className="text-white font-medium capitalize">{data.businessType}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-400">Industry</p>
-                    <p className="text-white font-medium">{data.industry}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-400">Target Market</p>
-                    <p className="text-white font-medium">{data.targetMarket}</p>
-                  </div>
-                </div>
-              </div>
-              <p className="text-slate-400 text-sm">
-                Once you start, our AI system will guide you through building your business with personalized recommendations at every step.
-              </p>
+            {/* Buttons */}
+            <div className="mt-8 flex gap-3">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="flex-1 rounded-lg border border-white/10 px-6 py-3 text-sm font-medium text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (data.businessIdea.trim()) {
+                    generateFoundation()
+                  }
+                }}
+                disabled={!data.businessIdea.trim() || loading}
+                className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] hover:bg-sky-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Build My Business {loading && <Sparkles className="h-4 w-4 animate-spin" />}
+              </button>
             </div>
-          )}
-        </motion.div>
-
-        {/* Buttons */}
-        <div className="mt-8 flex gap-3">
-          <button
-            onClick={handleBack}
-            disabled={step === 1}
-            className="flex-1 rounded-lg border border-white/10 px-6 py-3 text-sm font-medium text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          </motion.div>
+        ) : (
+          <motion.div
+            key="foundation"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
           >
-            Back
-          </button>
-          <button
-            onClick={handleNext}
-            disabled={getButtonDisabled()}
-            className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] hover:bg-sky-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
-          >
-            {step === 4 ? (
-              <>Start Launch {loading && <Sparkles className="h-4 w-4 animate-spin" />}</>
-            ) : (
-              <>Next <ArrowRight className="h-4 w-4" /></>
-            )}
-          </button>
-        </div>
+            <BusinessFoundation
+              data={generatedFoundation}
+              isApproved={foundationApproved}
+              isLoading={loading}
+              onApprove={() => {
+                setFoundationApproved(true)
+                handleApproveFoundation()
+              }}
+              onRegenerate={handleRegenerateFoundation}
+              onEditIdea={handleEditIdea}
+            />
+
+            {/* Back Button */}
+            <button
+              onClick={() => setGeneratedFoundation(null)}
+              className="mt-4 flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-slate-400 hover:text-white hover:border-sky-400/30 transition mx-auto"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Edit Idea
+            </button>
+          </motion.div>
+        )}
       </motion.div>
     </div>
   )
