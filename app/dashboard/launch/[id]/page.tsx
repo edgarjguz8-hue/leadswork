@@ -228,196 +228,270 @@ export default function LaunchDashboard() {
 
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-6 py-12">
-        {/* Header Section */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">{launch.name}</h1>
-            <span className="text-sm text-muted-foreground capitalize">{launch.industry}</span>
-          </div>
-          <p className="text-sm text-muted-foreground">{launch.description}</p>
-        </div>
+        {/* Top Section - Launch Summary */}
+        <div className="grid gap-8 lg:grid-cols-4 mb-16">
+          {/* Left - Project Info & Progress Circle */}
+          <div className="lg:col-span-1">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-8 backdrop-blur-sm"
+            >
+              {/* Icon */}
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-lg bg-sky-500/20 border border-sky-500/30">
+                <Sparkles className="h-7 w-7 text-sky-400" />
+              </div>
 
-        {/* Progress Section */}
-        <div className="mb-12">
-          <div className="rounded-lg border border-border bg-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-foreground">Overall Progress</h2>
-              <span className="text-2xl font-bold text-sky-400">{launch.progress}%</span>
-            </div>
-            <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${launch.progress}%` }}
-                transition={{ duration: 1, ease: 'easeInOut' }}
-                className="h-full bg-sky-400 rounded-full"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground mt-3">
-              {launch.steps.filter(s => s.isCompleted).length} of {launch.steps.length} steps completed
-            </p>
-          </div>
-        </div>
+              {/* Project Name */}
+              <h3 className="text-lg font-semibold text-white mb-1">{launch?.name}</h3>
+              <p className="text-xs text-slate-400 mb-8 capitalize">{launch?.industry}</p>
 
-        {/* Main Grid */}
-        <div className="grid gap-8 lg:grid-cols-3 mb-12">
-          {/* Current Step - Main Content */}
-          <div className="lg:col-span-2">
-            {launch.steps.length > 0 && (
+              {/* Progress Circle */}
+              <div className="mb-8">
+                <div className="relative h-48 w-48">
+                  <svg className="h-full w-full transform -rotate-90" viewBox="0 0 160 160">
+                    <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+                    <motion.circle
+                      cx="80"
+                      cy="80"
+                      r="70"
+                      fill="none"
+                      stroke="#38bdf8"
+                      strokeWidth="8"
+                      strokeDasharray={`${2 * Math.PI * 70}`}
+                      initial={{ strokeDashoffset: 2 * Math.PI * 70 }}
+                      animate={{
+                        strokeDashoffset: 2 * Math.PI * 70 * (1 - (launch?.progress || 0) / 100),
+                      }}
+                      transition={{ duration: 1, ease: 'easeInOut' }}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <p className="text-4xl font-bold text-sky-400">{launch?.progress}%</p>
+                      <p className="text-xs text-slate-400 mt-1">Complete</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="text-center">
+                <p className="text-sm font-semibold text-white">{launch?.steps.filter(s => s.isCompleted).length} of {launch?.steps.length} Steps Finished</p>
+                <p className="text-xs text-slate-400 mt-1">You're on your way! 🚀</p>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Center - Current Step & Next Actions */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Business Plan Card */}
+            {launch?.steps.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-lg border border-border bg-card p-8"
+                className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 backdrop-blur-sm"
               >
-                <div className="flex items-start justify-between mb-6">
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground mb-1">
-                      {launch.steps[1]?.title || 'Next Step'}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Step {launch.steps[1]?.stepNumber || 1} of 5
-                    </p>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-500/20">
+                    <Sparkles className="h-6 w-6 text-sky-400" />
                   </div>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      if (launch.steps[1] && !expandedSteps.includes(launch.steps[1].stepNumber)) {
-                        toggleStepExpansion(launch.steps[1].stepNumber)
-                      }
-                    }}
-                    className="rounded-md bg-sky-400 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-sky-500 transition flex items-center gap-2"
-                  >
-                    Continue <ChevronRight className="h-4 w-4" />
-                  </motion.button>
+                  <span className="text-xs text-slate-400">Step {launch.steps[1]?.stepNumber || 1} of 5</span>
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">{launch.steps[1]?.title || 'Next Step'}</h3>
+                <p className="text-sm text-slate-400 mb-6">{launch.steps[1]?.description || 'Build your roadmap to success'}</p>
+
+                <div className="space-y-3 mb-6">
+                  {launch.steps.slice(0, 3).map((step, idx) => (
+                    <motion.div
+                      key={step.id}
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="flex items-center gap-3"
+                    >
+                      {step.isCompleted ? (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500">
+                          <Check className="h-4 w-4 text-slate-900" />
+                        </div>
+                      ) : idx === 1 ? (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-sky-400">
+                          <div className="h-2 w-2 rounded-full bg-sky-400" />
+                        </div>
+                      ) : (
+                        <div className="h-6 w-6 rounded-full border-2 border-slate-600" />
+                      )}
+                      <span className={`text-sm ${step.isCompleted ? 'text-slate-400 line-through' : idx === 1 ? 'text-sky-400 font-medium' : 'text-slate-300'}`}>
+                        {step.title}
+                      </span>
+                      {step.isCompleted && <span className="ml-auto text-xs text-emerald-400">Done</span>}
+                      {idx === 1 && <span className="ml-auto text-xs text-sky-400">Next</span>}
+                    </motion.div>
+                  ))}
                 </div>
 
-                {/* Progress for Current Step */}
-                {launch.steps[1] && (
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-muted-foreground">Step Progress</span>
-                      <span className="text-xs font-medium text-sky-400">{launch.steps[1].progress}%</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${launch.steps[1].progress}%` }}
-                        transition={{ duration: 1, ease: 'easeInOut' }}
-                        className="h-full bg-sky-400 rounded-full"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Step Description */}
-                {launch.steps[1]?.description && (
-                  <p className="text-sm text-muted-foreground mb-6">{launch.steps[1].description}</p>
-                )}
-
-                <div className="border-t border-border pt-6">
-                  <h3 className="text-sm font-semibold text-foreground mb-4">All Steps</h3>
-                  <div className="space-y-2">
-                    {launch.steps.map((step) => (
-                      <motion.button
-                        key={step.id}
-                        whileHover={{ x: 4 }}
-                        onClick={() => toggleStepExpansion(step.stepNumber)}
-                        className="w-full text-left flex items-center gap-3 p-3 rounded-md hover:bg-secondary transition group"
-                      >
-                        <div className="flex-shrink-0">
-                          {step.isCompleted ? (
-                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
-                              <Check className="h-3 w-3 text-background" />
-                            </div>
-                          ) : (
-                            <div className="flex h-5 w-5 items-center justify-center rounded-full border border-border bg-secondary">
-                              <span className="text-xs font-semibold text-muted-foreground">{step.stepNumber}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium ${step.isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-                            {step.title}
-                          </p>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition" />
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    if (launch.steps[1] && !expandedSteps.includes(launch.steps[1].stepNumber)) {
+                      toggleStepExpansion(launch.steps[1].stepNumber)
+                    }
+                  }}
+                  className="w-full rounded-lg bg-sky-500 px-6 py-3 text-sm font-semibold text-white hover:bg-sky-600 transition flex items-center justify-center gap-2"
+                >
+                  Continue Building <ChevronRight className="h-4 w-4" />
+                </motion.button>
               </motion.div>
             )}
+
+            {/* Next Recommended Step */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 backdrop-blur-sm"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20">
+                  <Check className="h-4 w-4 text-emerald-400" />
+                </div>
+                <h4 className="text-sm font-semibold text-white">Next Recommended Step</h4>
+                <span className="text-xs text-slate-400">Based on your progress</span>
+              </div>
+              <div className="flex items-center justify-between p-4 rounded-lg border border-slate-700/30 bg-slate-800/20">
+                <div>
+                  <p className="text-sm font-medium text-white">{launch?.steps[2]?.title || 'Next Step'}</p>
+                  <p className="text-xs text-slate-400 mt-1">Est. time: 15 min</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-slate-600" />
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                className="w-full mt-4 rounded-lg border border-emerald-500/30 px-6 py-3 text-sm font-medium text-emerald-400 hover:bg-emerald-500/10 transition"
+              >
+                Start This Step <ChevronRight className="h-4 w-4 inline ml-2" />
+              </motion.button>
+            </motion.div>
           </div>
 
-          {/* Sidebar - Quick Actions */}
+          {/* Right - AI Assistant & Launch Roadmap */}
           <div className="lg:col-span-1 space-y-4">
             {/* AI Assistant Card */}
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              whileHover={{ scale: 1.02 }}
-              onClick={() => setAiAssistantActive(true)}
-              className="w-full rounded-lg border border-border bg-card p-6 text-left hover:border-sky-400/30 hover:bg-sky-400/5 transition"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-purple-500/20 mb-4">
-                <Sparkles className="h-5 w-5 text-purple-400" />
-              </div>
-              <h3 className="font-semibold text-foreground text-sm mb-1">AI Assistant</h3>
-              <p className="text-xs text-muted-foreground">Get guidance and answers for your business.</p>
-            </motion.button>
-
-            {/* Business Snapshot Card */}
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               whileHover={{ scale: 1.02 }}
-              className="w-full rounded-lg border border-border bg-card p-6 text-left hover:border-cyan-400/30 hover:bg-cyan-400/5 transition"
+              onClick={() => setAiAssistantActive(true)}
+              className="w-full rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 backdrop-blur-sm text-left hover:border-purple-500/30 transition group"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-cyan-500/20 mb-4">
-                <Target className="h-5 w-5 text-cyan-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/20 mb-4">
+                <Sparkles className="h-6 w-6 text-purple-400" />
               </div>
-              <h3 className="font-semibold text-foreground text-sm mb-1">Business Snapshot</h3>
-              <p className="text-xs text-muted-foreground">View key metrics and details.</p>
+              <h3 className="text-sm font-semibold text-white mb-1">AI Assistant</h3>
+              <p className="text-xs text-slate-400 mb-4">Get personalized guidance</p>
+              <p className="text-xs italic text-slate-500">"What should I focus on next to grow my brand?"</p>
             </motion.button>
+
+            {/* Launch Roadmap */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 backdrop-blur-sm"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/20 mb-4">
+                <Target className="h-6 w-6 text-orange-400" />
+              </div>
+              <h3 className="text-sm font-semibold text-white mb-1">Launch Roadmap</h3>
+              <p className="text-xs text-slate-400 mb-6">Track all steps to launch</p>
+
+              {/* Step Tracker */}
+              <div className="flex items-center justify-between gap-2">
+                {[1, 2, 3, 4, 5].map((step, idx) => {
+                  const isCompleted = launch?.steps[idx]?.isCompleted
+                  const isCurrent = idx === 1
+                  return (
+                    <div key={step} className="flex flex-col items-center gap-2">
+                      <div
+                        className={`flex h-8 w-8 items-center justify-center rounded-full font-bold text-xs transition ${
+                          isCompleted
+                            ? 'bg-emerald-500 text-white'
+                            : isCurrent
+                              ? 'bg-sky-500 text-white ring-2 ring-sky-400/50'
+                              : 'bg-slate-700/50 text-slate-400'
+                        }`}
+                      >
+                        {isCompleted ? <Check className="h-4 w-4" /> : step}
+                      </div>
+                      <span className={`text-xs font-medium ${isCurrent ? 'text-sky-400' : isCompleted ? 'text-emerald-400' : 'text-slate-500'}`}>
+                        {['Idea', 'Plan', 'Brand', 'Setup', 'Launch'][idx]}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                className="w-full mt-6 rounded-lg border border-orange-500/30 px-4 py-2 text-xs font-medium text-orange-400 hover:bg-orange-500/10 transition"
+              >
+                View All Steps <ChevronRight className="h-3 w-3 inline ml-1" />
+              </motion.button>
+            </motion.div>
           </div>
         </div>
 
-        {/* Steps Details Section */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Step Details</h3>
+        {/* Center AI Chatbox Section */}
+        <div className="mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mx-auto max-w-2xl rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-8 backdrop-blur-sm"
+          >
+            <BusinessAssistant
+              launchId={String(params.id)}
+              businessFoundation={businessFoundation}
+            />
+          </motion.div>
+        </div>
 
-          {launch.steps.map((step, index) => (
+        {/* Bottom Section - All Steps */}
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-white mb-6">All Steps</h3>
+
+          {launch?.steps.map((step, index) => (
             <motion.div
               key={step.id}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.03 }}
-              className="rounded-lg border border-border bg-card overflow-hidden hover:border-sky-400/30 transition"
+              className="rounded-lg border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] overflow-hidden hover:border-white/20 transition"
             >
               {/* Step Header */}
               <button
                 onClick={() => toggleStepExpansion(step.stepNumber)}
-                className="w-full p-4 text-left hover:bg-secondary/50 transition flex items-center justify-between"
+                className="w-full p-4 text-left hover:bg-white/[0.06] transition flex items-center justify-between"
               >
                 <div className="flex items-center gap-3 flex-1">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-secondary">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/20">
                     {step.isCompleted ? (
-                      <Check className="h-5 w-5 text-emerald-500" />
+                      <Check className="h-5 w-5 text-emerald-400" />
                     ) : (
                       <span className="text-xs font-bold text-sky-400">{step.stepNumber}</span>
                     )}
                   </div>
                   <div className="text-left">
-                    <h4 className={`text-sm font-semibold ${step.isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                    <h4 className={`text-sm font-semibold ${step.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
                       {step.title}
                     </h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{step.description}</p>
                   </div>
                 </div>
                 <ChevronRight
-                  className={`h-5 w-5 text-muted-foreground transition ${
+                  className={`h-5 w-5 text-slate-600 transition ${
                     expandedSteps.includes(step.stepNumber) ? 'rotate-90' : ''
                   }`}
                 />
@@ -429,13 +503,13 @@ export default function LaunchDashboard() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="border-t border-border p-4 space-y-3 bg-secondary/30"
+                  className="border-t border-white/10 p-4 space-y-3 bg-white/[0.02]"
                 >
                   {/* Step 1: Business Builder */}
                   {step.stepNumber === 1 ? (
                     <Step1BusinessBuilder
-                      launchName={launch.name}
-                      launchId={launch.id}
+                      launchName={launch?.name || ''}
+                      launchId={launch?.id || ''}
                       onComplete={() => fetchLaunch()}
                     />
                   ) : (
@@ -444,7 +518,7 @@ export default function LaunchDashboard() {
                       <div>
                         <AIToolsGrid
                           section={stepToSection[step.stepNumber as keyof typeof stepToSection] || 'foundation'}
-                          businessContext={`Business: ${launch.name}, Industry: ${launch.industry}, Description: ${launch.description}`}
+                          businessContext={`Business: ${launch?.name}, Industry: ${launch?.industry}, Description: ${launch?.description}`}
                           title={`AI Tools for ${step.title}`}
                           showAsButtons={true}
                         />
@@ -460,21 +534,21 @@ export default function LaunchDashboard() {
                             onClick={() => completeSubtask(step.id, subtask.id)}
                             className={`w-full flex items-start gap-3 p-3 rounded-md border transition ${
                               subtask.isCompleted
-                                ? 'border-emerald-500/20 bg-emerald-500/5 text-muted-foreground'
-                                : 'border-border bg-background hover:bg-secondary/50'
+                                ? 'border-emerald-500/20 bg-emerald-500/5 text-slate-400'
+                                : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.06]'
                             }`}
                           >
                             <div className="flex-shrink-0 mt-1">
                               {subtask.isCompleted ? (
                                 <div className="flex h-5 w-5 items-center justify-center rounded border border-emerald-500 bg-emerald-500">
-                                  <Check className="h-3 w-3 text-background" />
+                                  <Check className="h-3 w-3 text-slate-900" />
                                 </div>
                               ) : (
-                                <div className="h-5 w-5 rounded border border-border bg-secondary" />
+                                <div className="h-5 w-5 rounded border border-white/20 bg-white/[0.02]" />
                               )}
                             </div>
                             <div className="text-left flex-1">
-                              <p className={`text-sm font-medium ${subtask.isCompleted ? 'line-through' : ''}`}>
+                              <p className={`text-sm font-medium ${subtask.isCompleted ? 'line-through' : 'text-white'}`}>
                                 {subtask.title}
                               </p>
                               {subtask.aiAssistanceType && (
