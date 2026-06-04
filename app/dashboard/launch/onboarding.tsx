@@ -16,13 +16,13 @@ interface OnboardingData {
 
 export function LaunchOnboarding() {
   const router = useRouter()
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(1) // Maps to original step 3
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<OnboardingData>({
-    businessName: '',
-    businessType: '',
-    industry: '',
-    description: '',
+    businessName: 'My Business',
+    businessType: 'other',
+    industry: 'Tech',
+    description: 'A tech business',
     targetMarket: '',
     businessGoal: '',
   })
@@ -33,7 +33,7 @@ export function LaunchOnboarding() {
   }
 
   const handleNext = () => {
-    if (step < 4) {
+    if (step < 2) {
       setStep(step + 1)
     } else {
       submitOnboarding()
@@ -49,16 +49,11 @@ export function LaunchOnboarding() {
   const getButtonDisabled = () => {
     if (loading) return true
     
-    // On each step, check the required fields for that step
+    // Only check for the remaining steps (original 3 and 4)
     switch (step) {
-      case 1:
-        return !data.businessName || !data.businessType
-      case 2:
-        return !data.industry || !data.description
-      case 3:
+      case 1: // Original step 3
         return !data.targetMarket || !data.businessGoal
-      case 4:
-        // Review step - button should never be disabled
+      case 2: // Original step 4 (review)
         return false
       default:
         return false
@@ -108,7 +103,7 @@ export function LaunchOnboarding() {
             <Sparkles className="h-6 w-6 text-sky-400" />
             <h1 className="text-4xl font-bold text-white">Start Your Business Launch</h1>
           </div>
-          <p className="text-slate-400">Step {step} of 4 - Tell us about your business idea</p>
+          <p className="text-slate-400">Step {step} of 2 - Tell us about your business idea</p>
         </div>
 
         {/* Progress Bar */}
@@ -116,7 +111,7 @@ export function LaunchOnboarding() {
           <motion.div
             className="h-full bg-sky-400"
             initial={{ width: 0 }}
-            animate={{ width: `${(step / 4) * 100}%` }}
+            animate={{ width: `${(step / 2) * 100}%` }}
             transition={{ duration: 0.3 }}
           />
         </div>
@@ -130,66 +125,6 @@ export function LaunchOnboarding() {
           className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur"
         >
           {step === 1 && (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Business Name</label>
-                <input
-                  type="text"
-                  name="businessName"
-                  value={data.businessName}
-                  onChange={handleInputChange}
-                  placeholder="What's your business called?"
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Business Type</label>
-                <select
-                  name="businessType"
-                  value={data.businessType}
-                  onChange={handleInputChange}
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white focus:border-sky-400 focus:outline-none transition"
-                >
-                  <option value="">Select a type...</option>
-                  <option value="service">Service Business</option>
-                  <option value="product">Product Business</option>
-                  <option value="saas">SaaS</option>
-                  <option value="ecommerce">E-commerce</option>
-                  <option value="consulting">Consulting</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Industry</label>
-                <input
-                  type="text"
-                  name="industry"
-                  value={data.industry}
-                  onChange={handleInputChange}
-                  placeholder="What industry is your business in?"
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Business Description</label>
-                <textarea
-                  name="description"
-                  value={data.description}
-                  onChange={handleInputChange}
-                  placeholder="Describe what your business does..."
-                  rows={4}
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition resize-none"
-                />
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-white mb-2">Target Market</label>
@@ -216,7 +151,7 @@ export function LaunchOnboarding() {
             </div>
           )}
 
-          {step === 4 && (
+          {step === 2 && (
             <div className="space-y-6">
               <div className="rounded-lg border border-sky-400/30 bg-sky-400/10 p-6">
                 <h3 className="font-semibold text-white mb-4">Review Your Information</h3>
@@ -260,7 +195,7 @@ export function LaunchOnboarding() {
             disabled={getButtonDisabled()}
             className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] hover:bg-sky-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
-            {step === 4 ? (
+            {step === 2 ? (
               <>Start Launch {loading && <Sparkles className="h-4 w-4 animate-spin" />}</>
             ) : (
               <>Next <ArrowRight className="h-4 w-4" /></>
