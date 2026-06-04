@@ -1,6 +1,6 @@
 export const stepResources = {
   1: {
-    title: 'Define Your Idea',
+    title: 'Create Your Business',
     resources: [
       {
         id: 'idea-canvas',

@@ -14,6 +14,7 @@ import {
 import { motion } from 'framer-motion'
 import { AIToolsGrid } from '@/components/AIToolsGrid'
 import { BusinessFoundation } from '@/components/business-foundation'
+import { IdeaCreator } from '@/components/idea-creator'
 
 interface Step {
   id: string
@@ -385,22 +386,32 @@ export default function LaunchDashboard() {
                   exit={{ opacity: 0, height: 0 }}
                   className="border-t border-white/10 p-6"
                 >
-                  {/* Step 1: Business Foundation */}
+                  {/* Step 1: Create Your Business */}
                   {step.stepNumber === 1 ? (
-                    <BusinessFoundation
-                      data={launch.foundationData}
-                      isApproved={step.isCompleted}
-                      isLoading={loading}
-                      onApprove={handleApproveFoundation}
-                      onRegenerate={() => {
-                        // In a real app, this would call an API to regenerate
-                        console.log('[v0] Regenerating foundation')
-                      }}
-                      onEditIdea={() => {
-                        // In a real app, this would allow editing the business idea
-                        console.log('[v0] Editing business idea')
-                      }}
-                    />
+                    <>
+                      {!launch.foundationData ? (
+                        <IdeaCreator
+                          onIdeaSelected={(idea) => {
+                            // This would be handled through the onboarding flow
+                            console.log('[v0] Idea selected:', idea)
+                          }}
+                          isLoading={loading}
+                        />
+                      ) : (
+                        <BusinessFoundation
+                          data={launch.foundationData}
+                          isApproved={step.isCompleted}
+                          isLoading={loading}
+                          onApprove={handleApproveFoundation}
+                          onRegenerate={() => {
+                            console.log('[v0] Regenerating foundation')
+                          }}
+                          onEditIdea={() => {
+                            console.log('[v0] Editing business idea')
+                          }}
+                        />
+                      )}
+                    </>
                   ) : (
                     <>
                       {/* AI Tools Section */}

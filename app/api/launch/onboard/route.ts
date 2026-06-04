@@ -42,13 +42,13 @@ export async function POST(req: Request) {
     const stepDefinitions = [
       {
         number: 1,
-        title: 'Define Your Idea',
-        description: 'Clarify your business concept, validate your idea, and define your value proposition.',
+        title: 'Create Your Business',
+        description: 'LeadsWork helps you create and define your business idea. We build the foundation of the business for you.',
         subtasks: [
-          { title: 'Business concept clarification', aiType: 'analyzer' },
-          { title: 'Market research and validation', aiType: 'researcher' },
-          { title: 'Competitive analysis', aiType: 'analyzer' },
-          { title: 'Create business plan outline', aiType: 'guide' },
+          { title: 'Generate business idea', aiType: 'generator' },
+          { title: 'Approve business foundation', aiType: 'analyzer' },
+          { title: 'Review revenue model and pricing', aiType: 'analyzer' },
+          { title: 'Finalize business concept', aiType: 'guide' },
         ],
       },
       {
