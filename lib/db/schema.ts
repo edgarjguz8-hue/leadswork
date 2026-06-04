@@ -1,4 +1,5 @@
 import { pgTable, text, timestamp, boolean, integer, json } from 'drizzle-orm/pg-core'
+import { relations } from 'drizzle-orm'
 
 // --- Better Auth required tables -------------------------------------------
 // Column names are camelCase to match Better Auth's defaults. Do not rename.
@@ -195,3 +196,45 @@ export const launchChat = pgTable('launchChat', {
   content: text('content').notNull(),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
 })
+
+// --- Relations ---
+
+export const businessLaunchRelations = relations(businessLaunch, ({ many }) => ({
+  steps: many(launchStep),
+  chats: many(launchChat),
+}))
+
+export const launchStepRelations = relations(launchStep, ({ one, many }) => ({
+  launch: one(businessLaunch, {
+    fields: [launchStep.launchId],
+    references: [businessLaunch.id],
+  }),
+  subtasks: many(launchSubtask),
+  resources: many(launchResource),
+  chats: many(launchChat),
+}))
+
+export const launchSubtaskRelations = relations(launchSubtask, ({ one }) => ({
+  step: one(launchStep, {
+    fields: [launchSubtask.stepId],
+    references: [launchStep.id],
+  }),
+}))
+
+export const launchResourceRelations = relations(launchResource, ({ one }) => ({
+  step: one(launchStep, {
+    fields: [launchResource.stepId],
+    references: [launchStep.id],
+  }),
+}))
+
+export const launchChatRelations = relations(launchChat, ({ one }) => ({
+  launch: one(businessLaunch, {
+    fields: [launchChat.launchId],
+    references: [businessLaunch.id],
+  }),
+  step: one(launchStep, {
+    fields: [launchChat.stepId],
+    references: [launchStep.id],
+  }),
+}))

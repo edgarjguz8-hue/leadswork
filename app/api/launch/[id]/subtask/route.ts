@@ -48,7 +48,7 @@ export async function POST(
     })
 
     if (step) {
-      const allCompleted = step.subtasks.every(st => st.isCompleted)
+      const allCompleted = step.subtasks.every((st: any) => st.isCompleted)
       if (allCompleted) {
         await db
           .update(launchStep)

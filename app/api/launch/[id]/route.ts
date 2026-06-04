@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { businessLaunch, launchStep, launchSubtask } from '@/lib/db/schema'
+import { businessLaunch } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { headers } from 'next/headers'
 
@@ -25,6 +25,16 @@ export async function GET(
         eq(businessLaunch.id, launchId),
         eq(businessLaunch.userId, session.user.id)
       ),
+      with: {
+        steps: {
+          with: {
+            subtasks: {
+              orderBy: (subtasks: any, { asc }: any) => [asc(subtasks.order)],
+            },
+          },
+          orderBy: (steps: any, { asc }: any) => [asc(steps.stepNumber)],
+        },
+      },
     })
 
     if (!launch) {
@@ -32,36 +42,26 @@ export async function GET(
       return Response.json({ error: 'Not found' }, { status: 404 })
     }
 
-    console.log('[v0] Launch found, fetching steps')
-
-    // Fetch all steps with subtasks
-    const steps = await db.query.launchStep.findMany({
-      where: eq(launchStep.launchId, launchId),
-      with: {
-        subtasks: {
-          orderBy: (subtasks, { asc }) => [asc(subtasks.order)],
-        },
-      },
-    })
+    console.log('[v0] Launch found with', launch.steps.length, 'steps')
 
     // Calculate progress
-    const allSubtasks = steps.flatMap(s => s.subtasks)
-    const completedSubtasks = allSubtasks.filter(s => s.isCompleted).length
+    const allSubtasks = launch.steps.flatMap((s: any) => s.subtasks)
+    const completedSubtasks = allSubtasks.filter((s: any) => s.isCompleted).length
     const progress = allSubtasks.length > 0 ? Math.round((completedSubtasks / allSubtasks.length) * 100) : 0
 
     const response = {
       ...launch,
       progress,
-      steps: steps.map(step => ({
+      steps: launch.steps.map((step: any) => ({
         ...step,
-        isCompleted: step.isCompleted || false,
+        isCompleted: step.subtasks.every((s: any) => s.isCompleted),
         progress: step.subtasks.length > 0 ? Math.round(
-          (step.subtasks.filter(s => s.isCompleted).length / step.subtasks.length) * 100
+          (step.subtasks.filter((s: any) => s.isCompleted).length / step.subtasks.length) * 100
         ) : 0,
       })),
     }
     
-    console.log('[v0] Returning launch data with', steps.length, 'steps')
+    console.log('[v0] Returning launch data')
     return Response.json(response)
   } catch (error) {
     console.error('[v0] Failed to fetch launch:', error)
