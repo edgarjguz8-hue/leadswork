@@ -227,136 +227,179 @@ export default function LaunchDashboard() {
 
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-6 py-12">
-        {/* WHOOP-Style Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-12 rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur"
-        >
-          <div className="grid gap-8 lg:grid-cols-3">
-            {/* Progress Circle */}
-            <div className="flex flex-col items-center justify-center lg:items-start">
-              <div className="relative h-40 w-40">
-                <svg className="h-full w-full transform -rotate-90" viewBox="0 0 160 160">
-                  {/* Background circle */}
-                  <circle
-                    cx="80"
-                    cy="80"
-                    r="70"
-                    fill="none"
-                    stroke="rgba(255,255,255,0.1)"
-                    strokeWidth="8"
-                  />
-                  {/* Progress circle */}
-                  <motion.circle
-                    cx="80"
-                    cy="80"
-                    r="70"
-                    fill="none"
-                    stroke="#38bdf8"
-                    strokeWidth="8"
-                    strokeDasharray={`${2 * Math.PI * 70}`}
-                    initial={{ strokeDashoffset: 2 * Math.PI * 70 }}
-                    animate={{
-                      strokeDashoffset: 2 * Math.PI * 70 * (1 - launch.progress / 100),
-                    }}
-                    transition={{ duration: 1, ease: 'easeInOut' }}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-4xl font-bold text-sky-400">{launch.progress}%</p>
-                    <p className="text-xs text-slate-400 mt-1">Complete</p>
+        {/* New Dashboard Layout */}
+        <div className="grid gap-8 lg:grid-cols-4">
+          {/* Left Sidebar - Progress */}
+          <div className="lg:col-span-1">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur h-full"
+            >
+              {/* Icon */}
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-lg border border-sky-400/30 bg-sky-400/10">
+                <Sparkles className="h-8 w-8 text-sky-400" />
+              </div>
+
+              {/* Name and Category */}
+              <h3 className="text-xl font-semibold text-white mb-1">{launch.name}</h3>
+              <p className="text-sm text-slate-400 mb-8 capitalize">{launch.industry}</p>
+
+              {/* Progress Circle */}
+              <div className="mb-8">
+                <div className="relative h-48 w-48">
+                  <svg className="h-full w-full transform -rotate-90" viewBox="0 0 160 160">
+                    {/* Background circle */}
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r="70"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.1)"
+                      strokeWidth="8"
+                    />
+                    {/* Progress circle */}
+                    <motion.circle
+                      cx="80"
+                      cy="80"
+                      r="70"
+                      fill="none"
+                      stroke="#38bdf8"
+                      strokeWidth="8"
+                      strokeDasharray={`${2 * Math.PI * 70}`}
+                      initial={{ strokeDashoffset: 2 * Math.PI * 70 }}
+                      animate={{
+                        strokeDashoffset: 2 * Math.PI * 70 * (1 - launch.progress / 100),
+                      }}
+                      transition={{ duration: 1, ease: 'easeInOut' }}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <p className="text-4xl font-bold text-sky-400">{launch.progress}%</p>
+                      <p className="text-xs text-slate-400 mt-1">Complete</p>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="mt-6 text-center lg:text-left">
-                <p className="text-sm font-medium text-white">{launch.name}</p>
-                <p className="text-xs text-slate-400 capitalize">{launch.industry}</p>
-              </div>
-            </div>
+            </motion.div>
+          </div>
 
-            {/* Next To-Do */}
-            <div className="lg:col-span-2">
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">
-                Your Next To-Do
-              </p>
-              {nextTodo ? (
-                <div className="space-y-4">
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="rounded-lg border border-sky-400/30 bg-sky-400/10 p-6"
-                  >
-                    <div className="flex items-start gap-3">
-                      <Sparkles className="h-6 w-6 text-sky-400 flex-shrink-0 mt-1" />
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-white">{nextTodo.title}</h3>
-                        <p className="text-sm text-slate-400 mt-1">
-                          Step {launch.steps.find(s => s.subtasks.find(st => st.id === nextTodo.id))?.stepNumber}: {nextTodo.stepTitle}
-                        </p>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          onClick={() => {
-                            const step = launch.steps.find(s =>
-                              s.subtasks.some(st => st.id === nextTodo.id)
-                            )
-                            if (step && !expandedSteps.includes(step.stepNumber)) {
-                              toggleStepExpansion(step.stepNumber)
-                            }
-                          }}
-                          className="mt-3 inline-flex items-center gap-2 rounded-lg bg-sky-400 px-4 py-2 text-sm font-medium text-[#0a1220] hover:bg-sky-300 transition"
-                        >
-                          Get Started <ChevronRight className="h-4 w-4" />
-                        </motion.button>
+          {/* Main Content - Steps and Checklist */}
+          <div className="lg:col-span-3 space-y-8">
+            {/* Current Step Card */}
+            {launch.steps.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-400/10">
+                        <Sparkles className="h-6 w-6 text-sky-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-semibold text-white">{launch.steps[1]?.title || 'Next Step'}</h2>
+                        <p className="text-sm text-slate-400">Step {launch.steps[1]?.stepNumber || 1} of 5</p>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      if (launch.steps[1] && !expandedSteps.includes(launch.steps[1].stepNumber)) {
+                        toggleStepExpansion(launch.steps[1].stepNumber)
+                      }
+                    }}
+                    className="rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] hover:bg-sky-300 transition flex items-center gap-2"
+                  >
+                    Continue <ChevronRight className="h-4 w-4" />
+                  </motion.button>
+                </div>
 
-                  {/* AI Assistant Recommendation */}
-                  {nextTodo.aiAssistanceType && (
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      onClick={() => setAiAssistantActive(true)}
-                      className="w-full rounded-lg border border-white/10 bg-white/[0.03] p-4 text-left hover:border-sky-400/30 hover:bg-white/[0.06] transition"
+                {/* Checklist */}
+                <div className="mt-8 space-y-3">
+                  {launch.steps.map((step, idx) => (
+                    <motion.div
+                      key={step.id}
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="flex items-center gap-3"
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-sky-400" />
-                          <div>
-                            <p className="text-sm font-medium text-white">AI Assistant</p>
-                            <p className="text-xs text-slate-400">Get personalized guidance</p>
-                          </div>
+                      {step.isCompleted ? (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-400">
+                          <Check className="h-4 w-4 text-[#0a1220]" />
                         </div>
-                        <ChevronRight className="h-5 w-5 text-slate-600" />
-                      </div>
-                    </motion.button>
-                  )}
+                      ) : idx === 1 ? (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-sky-400 bg-sky-400/10">
+                          <div className="h-2 w-2 rounded-full bg-sky-400" />
+                        </div>
+                      ) : (
+                        <div className="h-6 w-6 rounded-full border-2 border-slate-600 bg-transparent" />
+                      )}
+                      <span className={`text-sm font-medium ${step.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
+                        {step.title}
+                      </span>
+                    </motion.div>
+                  ))}
                 </div>
-              ) : (
-                <div className="rounded-lg border border-emerald-400/30 bg-emerald-400/10 p-6">
-                  <p className="text-white font-medium">🎉 All tasks completed!</p>
-                  <p className="text-sm text-slate-400 mt-1">
-                    Your business is fully launched and ready to scale.
-                  </p>
+              </motion.div>
+            )}
+
+            {/* Action Cards */}
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* AI Assistant Card */}
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                whileHover={{ scale: 1.02 }}
+                onClick={() => setAiAssistantActive(true)}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur text-left hover:border-purple-400/30 hover:bg-purple-400/5 transition"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-500/20">
+                    <Sparkles className="h-6 w-6 text-purple-400" />
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-slate-600" />
                 </div>
-              )}
+                <h3 className="text-lg font-semibold text-white">AI Assistant</h3>
+                <p className="text-sm text-slate-400 mt-2">Get answers and guidance for your business.</p>
+              </motion.button>
+
+              {/* Business Snapshot Card */}
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                whileHover={{ scale: 1.02 }}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur text-left hover:border-cyan-400/30 hover:bg-cyan-400/5 transition"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-cyan-500/20">
+                    <div className="flex gap-1">
+                      <div className="h-3 w-1 rounded-full bg-cyan-400" />
+                      <div className="h-5 w-1 rounded-full bg-cyan-400" />
+                      <div className="h-4 w-1 rounded-full bg-cyan-400" />
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-slate-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Business Snapshot</h3>
+                <p className="text-sm text-slate-400 mt-2">Key details about your business at a glance.</p>
+              </motion.button>
             </div>
           </div>
-        </motion.div>
-
-        {/* Business Assistant Chat */}
-        <div className="pt-4">
-          <BusinessAssistant
-            launchId={String(params.id)}
-            businessFoundation={businessFoundation}
-          />
         </div>
 
-        {/* Steps Section */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-white mb-6">Your Launch Steps</h2>
+        {/* Steps Section - Expandable Details */}
+        <div className="mt-12 space-y-4">
+          <h2 className="text-lg font-semibold text-white">Step Details</h2>
 
           {launch.steps.map((step, index) => (
             <motion.div
@@ -466,6 +509,16 @@ export default function LaunchDashboard() {
             </motion.div>
           ))}
         </div>
+
+        {/* Business Assistant Chat */}
+        {aiAssistantActive && (
+          <div className="mt-12">
+            <BusinessAssistant
+              launchId={String(params.id)}
+              businessFoundation={businessFoundation}
+            />
+          </div>
+        )}
       </div>
 
       {/* Delete Confirmation Dialog */}
