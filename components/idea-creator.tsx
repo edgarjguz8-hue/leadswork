@@ -243,6 +243,8 @@ export function IdeaCreator({ onIdeaSelected, isLoading = false }: IdeaCreatorPr
   const [customIdea, setCustomIdea] = useState('')
   const [selectedIdea, setSelectedIdea] = useState<string | null>(null)
   const [foundation, setFoundation] = useState<BusinessFoundation | null>(null)
+  const [generating, setGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const categories = [
     { id: 'service', label: 'Service Business', icon: '💼' },
@@ -273,20 +275,65 @@ export function IdeaCreator({ onIdeaSelected, isLoading = false }: IdeaCreatorPr
     setStep('ideas')
   }
 
-  const handleUseIdea = (idea: GeneratedIdea) => {
+  const handleUseIdea = async (idea: GeneratedIdea) => {
     const ideaText = idea.name
     setSelectedIdea(ideaText)
-    const generated = generateFoundation(ideaText)
-    setFoundation(generated)
-    setStep('foundation')
-  }
+    setGenerating(true)
+    setError(null)
+    
+    try {
+      const response = await fetch('/api/generate-business-foundation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idea: ideaText }),
+      })
 
-  const handleSubmitCustom = () => {
-    if (customIdea.trim()) {
-      setSelectedIdea(customIdea.trim())
-      const generated = generateFoundation(customIdea.trim())
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to generate foundation')
+      }
+
+      const generated = await response.json()
       setFoundation(generated)
       setStep('foundation')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to generate foundation. Please try again.'
+      setError(message)
+      console.error('[v0] Foundation generation error:', err)
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const handleSubmitCustom = async () => {
+    if (customIdea.trim()) {
+      const ideaText = customIdea.trim()
+      setSelectedIdea(ideaText)
+      setGenerating(true)
+      setError(null)
+
+      try {
+        const response = await fetch('/api/generate-business-foundation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idea: ideaText }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to generate foundation')
+        }
+
+        const generated = await response.json()
+        setFoundation(generated)
+        setStep('foundation')
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to generate foundation. Please try again.'
+        setError(message)
+        console.error('[v0] Foundation generation error:', err)
+      } finally {
+        setGenerating(false)
+      }
     }
   }
 
@@ -296,10 +343,32 @@ export function IdeaCreator({ onIdeaSelected, isLoading = false }: IdeaCreatorPr
     }
   }
 
-  const handleRegenerate = () => {
+  const handleRegenerate = async () => {
     if (selectedIdea) {
-      const generated = generateFoundation(selectedIdea)
-      setFoundation(generated)
+      setGenerating(true)
+      setError(null)
+
+      try {
+        const response = await fetch('/api/generate-business-foundation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idea: selectedIdea }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to regenerate foundation')
+        }
+
+        const generated = await response.json()
+        setFoundation(generated)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to regenerate foundation. Please try again.'
+        setError(message)
+        console.error('[v0] Foundation regeneration error:', err)
+      } finally {
+        setGenerating(false)
+      }
     }
   }
 
@@ -380,20 +449,36 @@ export function IdeaCreator({ onIdeaSelected, isLoading = false }: IdeaCreatorPr
                 className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none transition resize-none"
               />
 
+              {error && (
+                <div className="rounded-lg border border-red-400/30 bg-red-400/10 p-3">
+                  <p className="text-sm text-red-300">{error}</p>
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <button
                   onClick={handleBackToInitial}
-                  className="flex-1 rounded-lg border border-white/10 px-6 py-3 text-sm font-medium text-white hover:bg-white/5 transition"
+                  disabled={generating}
+                  className="flex-1 rounded-lg border border-white/10 px-6 py-3 text-sm font-medium text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleSubmitCustom}
-                  disabled={!customIdea.trim() || isLoading}
+                  disabled={!customIdea.trim() || generating || isLoading}
                   className="flex-1 rounded-lg bg-sky-400 px-6 py-3 text-sm font-medium text-[#0a1220] hover:bg-sky-300 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
                 >
-                  <Sparkles className="h-4 w-4" />
-                  Build My Idea
+                  {generating ? (
+                    <>
+                      <span className="inline-block animate-spin">⌛</span>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Build My Idea
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -444,6 +529,12 @@ export function IdeaCreator({ onIdeaSelected, isLoading = false }: IdeaCreatorPr
           >
             <h2 className="text-2xl font-bold text-white">Here are 3 ideas for you</h2>
 
+            {error && (
+              <div className="rounded-lg border border-red-400/30 bg-red-400/10 p-4">
+                <p className="text-sm text-red-300">{error}</p>
+              </div>
+            )}
+
             <div className="space-y-4">
               {generatedIdeas.map((idea, idx) => (
                 <motion.div
@@ -465,11 +556,20 @@ export function IdeaCreator({ onIdeaSelected, isLoading = false }: IdeaCreatorPr
                   </div>
                   <button
                     onClick={() => handleUseIdea(idea)}
-                    disabled={isLoading}
+                    disabled={generating || isLoading}
                     className="w-full rounded-lg bg-sky-400 px-4 py-2 text-sm font-medium text-[#0a1220] hover:bg-sky-300 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
                   >
-                    <Check className="h-4 w-4" />
-                    Use This Idea
+                    {generating ? (
+                      <>
+                        <span className="inline-block animate-spin">⌛</span>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Use This Idea
+                      </>
+                    )}
                   </button>
                 </motion.div>
               ))}
@@ -477,7 +577,8 @@ export function IdeaCreator({ onIdeaSelected, isLoading = false }: IdeaCreatorPr
 
             <button
               onClick={handleBackFromIdeas}
-              className="w-full rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition"
+              disabled={generating}
+              className="w-full rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Back to Categories
             </button>
@@ -563,24 +664,41 @@ export function IdeaCreator({ onIdeaSelected, isLoading = false }: IdeaCreatorPr
             </div>
 
             {/* Action Buttons */}
+            {error && (
+              <div className="rounded-lg border border-red-400/30 bg-red-400/10 p-4">
+                <p className="text-sm text-red-300">{error}</p>
+              </div>
+            )}
+            
             <div className="flex gap-3">
               <button
                 onClick={handleEditIdea}
-                className="flex-1 rounded-lg border border-white/10 px-6 py-3 text-sm font-medium text-white hover:bg-white/5 transition flex items-center justify-center gap-2"
+                disabled={generating}
+                className="flex-1 rounded-lg border border-white/10 px-6 py-3 text-sm font-medium text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
               >
                 <Edit2 className="h-4 w-4" />
                 Edit Idea
               </button>
               <button
                 onClick={handleRegenerate}
-                className="flex-1 rounded-lg border border-white/10 px-6 py-3 text-sm font-medium text-white hover:bg-white/5 transition flex items-center justify-center gap-2"
+                disabled={generating || isLoading}
+                className="flex-1 rounded-lg border border-white/10 px-6 py-3 text-sm font-medium text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
               >
-                <RotateCcw className="h-4 w-4" />
-                Regenerate
+                {generating ? (
+                  <>
+                    <span className="inline-block animate-spin">⌛</span>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="h-4 w-4" />
+                    Regenerate
+                  </>
+                )}
               </button>
               <button
                 onClick={handleApproveFoundation}
-                disabled={isLoading}
+                disabled={isLoading || generating}
                 className="flex-1 rounded-lg bg-emerald-500 px-6 py-3 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
               >
                 <Check className="h-4 w-4" />
