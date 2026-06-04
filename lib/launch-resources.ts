@@ -1,94 +1,114 @@
 export const stepResources = {
   1: {
-    title: 'Define Your Idea',
+    title: 'Create Your Business',
     resources: [
       {
-        id: 'idea-canvas',
+        id: 'business-foundation',
         type: 'template',
-        title: 'Business Model Canvas',
-        description: 'A strategic template for developing new or documenting existing business models.',
+        title: 'Business Foundation Checklist',
+        description: 'Key elements to establish when creating your business.',
         content: `
-# Business Model Canvas
+# Business Foundation Checklist
 
-## Key Partnerships
-[Who are your key partners?]
+## Core Business Elements
+- [ ] Business Name finalized
+- [ ] Domain name registered or reserved
+- [ ] Business description written
+- [ ] Value proposition defined
+- [ ] Target market identified
 
-## Key Activities
-[What are your main activities?]
+## Target Audience
+- [ ] Customer segments defined
+- [ ] Customer personas created
+- [ ] Pain points identified
+- [ ] Customer needs documented
 
-## Key Resources
-[What resources do you need?]
+## Revenue & Pricing
+- [ ] Revenue model selected
+- [ ] Pricing strategy defined
+- [ ] Pricing tiers created (if applicable)
+- [ ] Unit economics calculated
 
-## Value Propositions
-[What value do you offer?]
-
-## Customer Relationships
-[How do you interact with customers?]
-
-## Channels
-[How do you reach customers?]
-
-## Customer Segments
-[Who are your customers?]
-
-## Cost Structure
-[What are your main costs?]
-
-## Revenue Streams
-[How do you make money?]
+## Business Model
+- [ ] Key partners identified
+- [ ] Key activities listed
+- [ ] Key resources needed
+- [ ] Channels to reach customers planned
         `
       },
       {
-        id: 'market-research',
+        id: 'business-naming',
         type: 'guide',
-        title: 'Market Research Guide',
-        description: 'Step-by-step guide to validate your market and identify opportunities.',
+        title: 'Business Naming Guide',
+        description: 'Tips and strategies for choosing the perfect business name.',
         content: `
-# Market Research Checklist
+# Business Naming Guide
 
-1. **Market Size Analysis**
-   - Total Addressable Market (TAM)
-   - Serviceable Available Market (SAM)
-   - Serviceable Obtainable Market (SOM)
+## Good Business Name Characteristics
+- **Memorable**: Easy to remember and spell
+- **Unique**: Distinguishes you from competitors
+- **Relevant**: Reflects your business or industry
+- **Available**: Domain name is available
+- **Scalable**: Works as your business grows
 
-2. **Competitor Analysis**
-   - Direct competitors
-   - Indirect competitors
-   - Competitive advantages
+## Naming Strategies
 
-3. **Customer Validation**
-   - Interview 20-30 potential customers
-   - Validate problem/solution fit
-   - Identify pain points
+### Descriptive Names
+Use words that describe what you do
+Example: "Digital Designs" for a web design company
 
-4. **Industry Trends**
-   - Market growth rate
-   - Emerging opportunities
-   - Regulatory changes
+### Personal Names
+Use your name or founder story
+Example: "Sarah's Consulting"
+
+### Invented Names
+Create a unique, made-up word
+Example: "Google", "Zappos"
+
+### Acronyms
+Create from first letters
+Example: "IBM" (International Business Machines)
+
+## Checklist
+- [ ] Name is easy to spell
+- [ ] Domain available (.com preferred)
+- [ ] Not trademarked by others
+- [ ] Meaningful or memorable
+- [ ] Works in your target market
         `
       },
       {
-        id: 'elevator-pitch',
+        id: 'market-positioning',
         type: 'template',
-        title: 'Elevator Pitch Template',
-        description: 'Create a compelling 30-60 second pitch for your business.',
+        title: 'Market Positioning Template',
+        description: 'Define how your business stands out in the market.',
         content: `
-# Elevator Pitch Template
+# Market Positioning
 
-[Start with hook]
-"Did you know that [problem statement]?"
+## Unique Value Proposition
+What makes you different from competitors?
 
-[Problem]
-"Today, [target market] struggle with [problem]..."
+[Your answer here]
 
-[Solution]
-"My business solves this by [solution]..."
+## Competitive Advantage
+What do you do better than others?
 
-[Why Now]
-"The market is ready because [market opportunity]..."
+[Your answer here]
 
-[Call to Action]
-"I'm looking for [investment/partnerships/customers]..."
+## Target Market
+Who is your ideal customer?
+
+[Your answer here]
+
+## Market Gap
+What problem or need are you addressing?
+
+[Your answer here]
+
+## Positioning Statement
+"For [target customer], [your company] is a [category] that [unique benefit]. Unlike [competitor], we [key differentiator]."
+
+[Your statement here]
         `
       },
     ]
