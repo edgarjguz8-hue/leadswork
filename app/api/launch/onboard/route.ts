@@ -7,6 +7,18 @@ import { headers } from 'next/headers'
 export async function POST(req: Request) {
   try {
     console.log('[v0] Onboarding API called')
+    
+    // Ensure all tables exist before proceeding
+    try {
+      const initResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/init`)
+      if (initResponse.ok) {
+        console.log('[v0] Migrations completed')
+      }
+    } catch (initError) {
+      console.log('[v0] Init call failed (might be startup timing):', initError)
+      // Continue anyway - migrations might already be done
+    }
+    
     const session = await auth.api.getSession({ headers: await headers() })
     
     if (!session?.user) {
@@ -42,7 +54,21 @@ export async function POST(req: Request) {
       console.log('[v0] Business launch created in database:', launchId)
     } catch (dbError) {
       console.error('[v0] Database error creating launch:', dbError)
-      return Response.json({ error: 'Failed to create launch in database', details: String(dbError) }, { status: 500 })
+      const errorMessage = dbError instanceof Error ? dbError.message : String(dbError)
+      console.error('[v0] Detailed error:', errorMessage)
+      
+      // Provide helpful error messages
+      let userFriendlyMessage = 'Failed to create launch'
+      if (errorMessage.includes('businessLaunch')) {
+        userFriendlyMessage = 'Database table not initialized. Please try again.'
+      } else if (errorMessage.includes('relation does not exist')) {
+        userFriendlyMessage = 'Database tables not found. Initializing...'
+      }
+      
+      return Response.json({ 
+        error: userFriendlyMessage,
+        details: errorMessage 
+      }, { status: 500 })
     }
 
     // Create the 5 main steps with their subtasks
