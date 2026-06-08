@@ -27,10 +27,17 @@ export async function POST(req: Request) {
         userId: session.user.id,
         name: data.businessName,
         description: data.description || '',
-        businessType: data.businessType,
+        businessType: data.businessType || '',
         industry: data.industry || '',
-        location: '',
-        progress: 0,
+        location: data.location || '',
+        completedSteps: '[]', // JSON array of completed step IDs
+        progress: 0, // 0-100
+        status: 'draft', // in_progress, launched, paused
+        isApproved: false,
+        approvedAt: null,
+        lastSavedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       console.log('[v0] Business launch created in database:', launchId)
     } catch (dbError) {
