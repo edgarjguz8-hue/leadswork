@@ -75,12 +75,18 @@ export function LaunchOnboarding() {
       if (response.ok) {
         const result = await response.json()
         console.log('[v0] Launch created successfully:', result)
-        console.log('[v0] Redirecting to:', `/dashboard/launch/${result.launchId}`)
-        router.push(`/dashboard/launch/${result.launchId}`)
+        if (result.launchId) {
+          console.log('[v0] Redirecting to:', `/dashboard/launch/${result.launchId}`)
+          router.push(`/dashboard/launch/${result.launchId}`)
+        } else {
+          console.error('[v0] No launchId in response:', result)
+          alert('Error: Launch created but no ID returned. Please try again.')
+        }
       } else {
-        const errorText = await response.text()
-        console.error('[v0] Onboarding API error:', response.status, errorText)
-        alert(`Error: ${errorText || 'Failed to create launch'}`)
+        const errorData = await response.json()
+        console.error('[v0] Onboarding API error:', response.status, errorData)
+        const errorMessage = errorData.error || errorData.details || 'Failed to create launch'
+        alert(`Error: ${errorMessage}`)
       }
     } catch (error) {
       console.error('[v0] Onboarding submission error:', error)

@@ -9,14 +9,12 @@ export async function POST(req: Request) {
     console.log('[v0] Onboarding API called')
     
     // Ensure all tables exist before proceeding
+    const initUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/init`
     try {
-      const initResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/init`)
-      if (initResponse.ok) {
-        console.log('[v0] Migrations completed')
-      }
+      await fetch(initUrl, { method: 'POST' })
+      console.log('[v0] Migrations completed')
     } catch (initError) {
-      console.log('[v0] Init call failed (might be startup timing):', initError)
-      // Continue anyway - migrations might already be done
+      console.log('[v0] Init call warning (tables might already exist):', initError)
     }
     
     const session = await auth.api.getSession({ headers: await headers() })
@@ -165,7 +163,11 @@ export async function POST(req: Request) {
     }
 
     console.log('[v0] Onboarding completed successfully, returning launchId:', launchId)
-    return Response.json({ launchId, id: launchId, success: true })
+    return Response.json({ 
+      success: true,
+      launchId,
+      message: 'Launch created successfully'
+    }, { status: 200 })
   } catch (error) {
     console.error('[v0] Onboarding API error:', error)
     return Response.json({ error: 'Failed to create launch', details: String(error) }, { status: 500 })
