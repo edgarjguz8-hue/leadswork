@@ -3,16 +3,10 @@ import { db } from '@/lib/db'
 import { businessLaunch, launchStep, launchSubtask } from '@/lib/db/schema'
 import { nanoid } from 'nanoid'
 import { headers } from 'next/headers'
-import { runMigrations } from '@/lib/db/migrations'
 
 export async function POST(req: Request) {
   try {
     console.log('[v0] Onboarding API called')
-    
-    // Ensure all tables exist before proceeding - call migrations directly
-    console.log('[v0] Running database migrations...')
-    const migrationResult = await runMigrations()
-    console.log('[v0] Migration result:', migrationResult)
     
     const session = await auth.api.getSession({ headers: await headers() })
     
@@ -24,7 +18,7 @@ export async function POST(req: Request) {
     const data = await req.json()
     console.log('[v0] Onboarding data received:', { businessName: data.businessName, businessType: data.businessType })
 
-    // Create business launch
+    // Create business launch - only insert columns that exist in the database
     const launchId = nanoid()
     console.log('[v0] Generated launchId:', launchId)
     
@@ -37,14 +31,9 @@ export async function POST(req: Request) {
         businessType: data.businessType || '',
         industry: data.industry || '',
         location: data.location || '',
-        completedSteps: '[]', // JSON array of completed step IDs
-        progress: 0, // 0-100
-        status: 'draft', // in_progress, launched, paused
-        isApproved: false,
-        approvedAt: null,
-        lastSavedAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        completedSteps: '[]',
+        progress: 0,
+        status: 'draft',
       })
       console.log('[v0] Business launch created in database:', launchId)
     } catch (dbError) {
@@ -52,14 +41,8 @@ export async function POST(req: Request) {
       const errorMessage = dbError instanceof Error ? dbError.message : String(dbError)
       console.error('[v0] Detailed error:', errorMessage)
       
-      // Provide helpful error messages
-      let userFriendlyMessage = 'Failed to create launch'
-      if (errorMessage.includes('businessLaunch') || errorMessage.includes('relation does not exist')) {
-        userFriendlyMessage = 'Database initialization failed. Tables not created. Please contact support.'
-      }
-      
       return Response.json({ 
-        error: userFriendlyMessage,
+        error: 'Failed to create launch. Please try again.',
         details: errorMessage 
       }, { status: 500 })
     }
