@@ -9,6 +9,15 @@ export async function runMigrations() {
   console.log('[v0] Starting database migrations...')
 
   try {
+    // Create domain table first if it doesn't exist (it's referenced by other tables)
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS domain (
+        id text PRIMARY KEY,
+        name text NOT NULL UNIQUE
+      )
+    `)
+    console.log('[v0] ✓ domain table exists/created')
+
     // Create businessLaunch table if it doesn't exist
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS "businessLaunch" (

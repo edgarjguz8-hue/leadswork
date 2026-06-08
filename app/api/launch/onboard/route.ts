@@ -3,19 +3,16 @@ import { db } from '@/lib/db'
 import { businessLaunch, launchStep, launchSubtask } from '@/lib/db/schema'
 import { nanoid } from 'nanoid'
 import { headers } from 'next/headers'
+import { runMigrations } from '@/lib/db/migrations'
 
 export async function POST(req: Request) {
   try {
     console.log('[v0] Onboarding API called')
     
-    // Ensure all tables exist before proceeding
-    const initUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/init`
-    try {
-      await fetch(initUrl, { method: 'POST' })
-      console.log('[v0] Migrations completed')
-    } catch (initError) {
-      console.log('[v0] Init call warning (tables might already exist):', initError)
-    }
+    // Ensure all tables exist before proceeding - call migrations directly
+    console.log('[v0] Running database migrations...')
+    const migrationResult = await runMigrations()
+    console.log('[v0] Migration result:', migrationResult)
     
     const session = await auth.api.getSession({ headers: await headers() })
     
@@ -57,10 +54,8 @@ export async function POST(req: Request) {
       
       // Provide helpful error messages
       let userFriendlyMessage = 'Failed to create launch'
-      if (errorMessage.includes('businessLaunch')) {
-        userFriendlyMessage = 'Database table not initialized. Please try again.'
-      } else if (errorMessage.includes('relation does not exist')) {
-        userFriendlyMessage = 'Database tables not found. Initializing...'
+      if (errorMessage.includes('businessLaunch') || errorMessage.includes('relation does not exist')) {
+        userFriendlyMessage = 'Database initialization failed. Tables not created. Please contact support.'
       }
       
       return Response.json({ 

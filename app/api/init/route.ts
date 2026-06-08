@@ -9,3 +9,13 @@ export async function GET() {
     return Response.json({ error: 'Init failed' }, { status: 500 })
   }
 }
+
+export async function POST() {
+  try {
+    const result = await runMigrations()
+    return Response.json(result)
+  } catch (error) {
+    console.error('[v0] Init error:', error)
+    return Response.json({ error: 'Init failed' }, { status: 500 })
+  }
+}
