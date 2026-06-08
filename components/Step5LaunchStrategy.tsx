@@ -164,6 +164,23 @@ export function Step5LaunchStrategy({
         approvedAt: new Date().toISOString(),
       }))
 
+      // Mark Step 5 as complete
+      try {
+        const stepResponse = await fetch(`/api/launch/${launchId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            stepNumber: 5,
+            isCompleted: true,
+          }),
+        })
+        if (stepResponse.ok) {
+          console.log('[v0] Step 5 marked as complete')
+        }
+      } catch (stepError) {
+        console.error('[v0] Failed to mark step as complete:', stepError)
+      }
+
       setStage('completed')
       onComplete(strategy)
     } catch (error) {

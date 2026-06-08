@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { businessLaunch } from '@/lib/db/schema'
+import { businessLaunch, launchStep } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { headers } from 'next/headers'
 
@@ -66,6 +66,48 @@ export async function GET(
   } catch (error) {
     console.error('[v0] Failed to fetch launch:', error)
     return Response.json({ error: 'Failed to fetch launch' }, { status: 500 })
+  }
+}
+
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const resolvedParams = await params
+    const launchId = resolvedParams.id
+    const { stepNumber, isCompleted } = await req.json()
+
+    console.log('[v0] Marking step as complete:', launchId, 'stepNumber:', stepNumber)
+
+    const session = await auth.api.getSession({ headers: await headers() })
+    if (!session?.user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Find the step for this launch
+    const step = await db.query.launchStep.findFirst({
+      where: and(
+        eq(launchStep.launchId, launchId),
+        eq(launchStep.stepNumber, stepNumber)
+      ),
+    })
+
+    if (!step) {
+      return Response.json({ error: 'Step not found' }, { status: 404 })
+    }
+
+    // Mark the step as completed
+    await db.update(launchStep).set({
+      isCompleted,
+      completedAt: isCompleted ? new Date() : null,
+    }).where(eq(launchStep.id, step.id))
+
+    console.log('[v0] Step marked as complete')
+    return Response.json({ success: true, message: 'Step marked as complete' })
+  } catch (error) {
+    console.error('[v0] Failed to mark step as complete:', error)
+    return Response.json({ error: 'Failed to mark step as complete' }, { status: 500 })
   }
 }
 

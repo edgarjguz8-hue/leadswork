@@ -144,6 +144,23 @@ export function Step2BrandBuilder({
         })
 
         console.log('[v0] Brand foundation saved to assets')
+        
+        // Mark Step 2 as complete
+        try {
+          const stepResponse = await fetch(`/api/launch/${launchId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              stepNumber: 2,
+              isCompleted: true,
+            }),
+          })
+          if (stepResponse.ok) {
+            console.log('[v0] Step 2 marked as complete')
+          }
+        } catch (stepError) {
+          console.error('[v0] Failed to mark step as complete:', stepError)
+        }
       } catch (error) {
         console.error('[v0] Failed to save brand to assets:', error)
       }

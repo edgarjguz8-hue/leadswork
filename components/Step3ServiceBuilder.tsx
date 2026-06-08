@@ -171,6 +171,23 @@ export function Step3ServiceBuilder({
       })
 
       console.log('[v0] Services saved to assets')
+      
+      // Mark Step 3 as complete
+      try {
+        const stepResponse = await fetch(`/api/launch/${launchId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            stepNumber: 3,
+            isCompleted: true,
+          }),
+        })
+        if (stepResponse.ok) {
+          console.log('[v0] Step 3 marked as complete')
+        }
+      } catch (stepError) {
+        console.error('[v0] Failed to mark step as complete:', stepError)
+      }
     } catch (error) {
       console.error('[v0] Failed to save services to assets:', error)
     }
