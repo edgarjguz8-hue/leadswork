@@ -4,6 +4,14 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Sparkles, Check, X, Edit2, Eye, Save, RefreshCw } from 'lucide-react'
 
+interface ContactFormField {
+  name: string
+  label: string
+  type: string
+  placeholder: string
+  required: boolean
+}
+
 interface WebsiteSection {
   headline: string
   subheadline: string
@@ -17,6 +25,7 @@ interface WebsiteSection {
   ctaHeadline: string
   ctaText: string
   ctaButtonText: string
+  formFields?: ContactFormField[]
 }
 
 interface Step4WebsiteBuilderProps {
@@ -30,7 +39,7 @@ export function Step4WebsiteBuilder({
   launchName,
   onComplete,
 }: Step4WebsiteBuilderProps) {
-  const [stage, setStage] = useState<'idle' | 'generating' | 'reviewing' | 'preview' | 'completed'>('idle')
+  const [stage, setStage] = useState<'idle' | 'generating' | 'reviewing' | 'preview' | 'formBuilder' | 'formPreview' | 'completed'>('idle')
   const [website, setWebsite] = useState<WebsiteSection>({
     headline: '',
     subheadline: '',
@@ -44,11 +53,19 @@ export function Step4WebsiteBuilder({
     ctaHeadline: '',
     ctaText: '',
     ctaButtonText: '',
+    formFields: [
+      { name: 'name', label: 'Name', type: 'text', placeholder: 'Your name', required: true },
+      { name: 'email', label: 'Email', type: 'email', placeholder: 'your@email.com', required: true },
+      { name: 'phone', label: 'Phone', type: 'tel', placeholder: '(555) 123-4567', required: false },
+      { name: 'message', label: 'Message', type: 'textarea', placeholder: 'Your message here...', required: true },
+    ],
   })
   const [editingField, setEditingField] = useState<keyof WebsiteSection | null>(null)
   const [editValue, setEditValue] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [editingFormField, setEditingFormField] = useState<number | null>(null)
+  const [editingFormFieldProp, setEditingFormFieldProp] = useState<keyof ContactFormField | null>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem(`step4-${launchId}`)
@@ -132,6 +149,20 @@ export function Step4WebsiteBuilder({
         throw new Error('Failed to save website to assets')
       }
 
+      // Also save the form separately
+      if (website.formFields && website.formFields.length > 0) {
+        await fetch(`/api/launch/${launchId}/asset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'contact_form',
+            title: 'Contact Form',
+            content: JSON.stringify({ fields: website.formFields }),
+            isApproved: true,
+          }),
+        })
+      }
+
       localStorage.setItem(`step4-${launchId}`, JSON.stringify({
         stage: 'completed',
         website,
@@ -145,6 +176,29 @@ export function Step4WebsiteBuilder({
       setErrorMessage(error instanceof Error ? error.message : 'Failed to save website')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleEditFormField = (index: number, prop: keyof ContactFormField) => {
+    setEditingFormField(index)
+    setEditingFormFieldProp(prop)
+    setEditValue(website.formFields?.[index]?.[prop] as string)
+  }
+
+  const handleSaveFormFieldEdit = () => {
+    if (editingFormField !== null && editingFormFieldProp && website.formFields) {
+      const newFields = [...website.formFields]
+      newFields[editingFormField] = {
+        ...newFields[editingFormField],
+        [editingFormFieldProp]: editValue,
+      }
+      setWebsite({ ...website, formFields: newFields })
+      localStorage.setItem(`step4-${launchId}`, JSON.stringify({
+        stage: 'reviewing',
+        website: { ...website, formFields: newFields },
+      }))
+      setEditingFormField(null)
+      setEditingFormFieldProp(null)
     }
   }
 
@@ -240,12 +294,143 @@ export function Step4WebsiteBuilder({
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
+            onClick={() => setStage('formBuilder')}
+            className="flex-1 rounded-lg border border-purple-500/30 bg-purple-500/10 px-4 py-2 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 transition flex items-center justify-center gap-2"
+          >
+            <Edit2 className="h-4 w-4" />
+            Edit Form
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
             onClick={handleApproveWebsite}
             disabled={saving}
             className="flex-1 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <Save className="h-4 w-4" />
             Save Website
+          </motion.button>
+        </div>
+      </motion.div>
+    )
+  }
+
+  if (stage === 'formBuilder') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        <div className="rounded-lg border border-slate-700/50 bg-slate-800/30 p-6">
+          <h3 className="text-sm font-semibold text-slate-300 mb-4">Contact Form Fields</h3>
+          <div className="space-y-3">
+            {website.formFields?.map((field, index) => (
+              <div key={index} className="rounded-lg border border-slate-700/50 bg-slate-800/20 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-slate-400">Field {index + 1}</p>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleEditFormField(index, 'label')} className="p-2 rounded-lg text-slate-400 hover:bg-white/[0.05] transition"><Edit2 className="h-4 w-4" /></button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1">Label</p>
+                    {editingFormField === index && editingFormFieldProp === 'label' ? (
+                      <div className="flex gap-2">
+                        <input type="text" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="flex-1 rounded-lg border border-sky-400/50 bg-white/[0.05] px-3 py-2 text-white text-sm focus:outline-none focus:border-sky-400" autoFocus />
+                        <button onClick={handleSaveFormFieldEdit} className="p-2 rounded-lg bg-emerald-400/20 text-emerald-400 hover:bg-emerald-400/30 transition"><Check className="h-4 w-4" /></button>
+                      </div>
+                    ) : (
+                      <p className="text-white text-sm">{field.label}</p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1">Type</p>
+                    <p className="text-slate-300 text-sm">{field.type}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 mb-1">Placeholder</p>
+                  {editingFormField === index && editingFormFieldProp === 'placeholder' ? (
+                    <div className="flex gap-2">
+                      <input type="text" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="flex-1 rounded-lg border border-sky-400/50 bg-white/[0.05] px-3 py-2 text-white text-sm focus:outline-none focus:border-sky-400" autoFocus />
+                      <button onClick={handleSaveFormFieldEdit} className="p-2 rounded-lg bg-emerald-400/20 text-emerald-400 hover:bg-emerald-400/30 transition"><Check className="h-4 w-4" /></button>
+                    </div>
+                  ) : (
+                    <p className="text-slate-300 text-sm">{field.placeholder}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            onClick={() => setStage('preview')}
+            className="flex-1 rounded-lg border border-slate-700/50 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.05] transition flex items-center justify-center gap-2"
+          >
+            <Eye className="h-4 w-4" />
+            Preview Form
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            onClick={handleApproveWebsite}
+            disabled={saving}
+            className="flex-1 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Save className="h-4 w-4" />
+            Save All
+          </motion.button>
+        </div>
+      </motion.div>
+    )
+  }
+
+  if (stage === 'formPreview') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        <div className="rounded-lg border border-slate-700/50 bg-slate-900/50 p-8">
+          <h2 className="text-2xl font-semibold text-white mb-6">Contact Form Preview</h2>
+          <form className="space-y-4">
+            {website.formFields?.map((field, index) => (
+              <div key={index}>
+                <label className="text-sm font-medium text-slate-300">{field.label} {field.required && '*'}</label>
+                {field.type === 'textarea' ? (
+                  <textarea placeholder={field.placeholder} className="w-full rounded-lg border border-slate-700/50 bg-white/[0.05] px-4 py-2 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none" rows={4} />
+                ) : (
+                  <input type={field.type} placeholder={field.placeholder} className="w-full rounded-lg border border-slate-700/50 bg-white/[0.05] px-4 py-2 text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none" />
+                )}
+              </div>
+            ))}
+            <button type="button" className="w-full rounded-lg bg-sky-500 px-4 py-2 font-semibold text-white hover:bg-sky-600 transition">
+              Send Message
+            </button>
+          </form>
+        </div>
+
+        <div className="flex gap-2">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            onClick={() => setStage('formBuilder')}
+            className="flex-1 rounded-lg border border-slate-700/50 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.05] transition flex items-center justify-center gap-2"
+          >
+            <Edit2 className="h-4 w-4" />
+            Edit Form
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            onClick={handleApproveWebsite}
+            disabled={saving}
+            className="flex-1 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Save className="h-4 w-4" />
+            Save Form
           </motion.button>
         </div>
       </motion.div>
@@ -480,6 +665,9 @@ export function Step4WebsiteBuilder({
       <div className="flex gap-3">
         <motion.button whileHover={{ scale: 1.02 }} onClick={() => setStage('idle')} className="flex-1 rounded-lg border border-slate-700/50 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.05] transition flex items-center justify-center gap-2">
           <RefreshCw className="h-4 w-4" />Regenerate
+        </motion.button>
+        <motion.button whileHover={{ scale: 1.02 }} onClick={() => setStage('formBuilder')} className="flex-1 rounded-lg border border-purple-500/30 bg-purple-500/10 px-4 py-2 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 transition flex items-center justify-center gap-2">
+          <Edit2 className="h-4 w-4" />Form
         </motion.button>
         <motion.button whileHover={{ scale: 1.02 }} onClick={() => setStage('preview')} className="flex-1 rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-400 hover:bg-sky-500/20 transition flex items-center justify-center gap-2">
           <Eye className="h-4 w-4" />Preview
