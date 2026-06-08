@@ -242,9 +242,7 @@ export default function LaunchDashboard() {
                 <Sparkles className="h-7 w-7 text-sky-400" />
               </div>
 
-              {/* Project Name */}
-              <h3 className="text-lg font-semibold text-white mb-1">{launch?.name}</h3>
-              <p className="text-xs text-slate-400 mb-8 capitalize">{launch?.industry}</p>
+
 
               {/* Progress Circle */}
               <div className="mb-8">
@@ -278,8 +276,7 @@ export default function LaunchDashboard() {
 
               {/* Stats */}
               <div className="text-center">
-                <p className="text-sm font-semibold text-white">{launch?.steps.filter(s => s.isCompleted).length} of {launch?.steps.length} Steps Finished</p>
-                <p className="text-xs text-slate-400 mt-1">You're on your way! 🚀</p>
+                <p className="text-xs text-slate-400 mt-1">You&apos;re on your way! 🚀</p>
               </div>
             </motion.div>
           </div>
