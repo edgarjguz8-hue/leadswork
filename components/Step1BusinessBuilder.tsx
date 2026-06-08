@@ -25,6 +25,7 @@ interface BusinessFoundation {
   description: string
   whatYouSell: string
   whoYouServe: string
+  problemSolved: string
   revenueModel: string
   simplePricing: string
   businessPlanSummary: string
@@ -114,7 +115,7 @@ export function Step1BusinessBuilder({ launchName, launchId, onComplete }: Step1
     }
   }
 
-  const handleApproveFoundation = () => {
+  const handleApproveFoundation = async () => {
     // Apply any edits made before approval
     const finalFoundation = {
       ...businessFoundation,
@@ -128,6 +129,36 @@ export function Step1BusinessBuilder({ launchName, launchId, onComplete }: Step1
       foundation: finalFoundation,
       approvedAt: new Date().toISOString(),
     }))
+
+    // Save to Business Assets in database
+    try {
+      const assetContent = JSON.stringify({
+        businessName: finalFoundation.businessName,
+        recommendedDomain: finalFoundation.recommendedDomain,
+        businessConcept: finalFoundation.description,
+        targetCustomer: finalFoundation.whoYouServe,
+        problemSolved: finalFoundation.problemSolved,
+        revenueModel: finalFoundation.revenueModel,
+        whatYouSell: finalFoundation.whatYouSell,
+        simplePricing: finalFoundation.simplePricing,
+        businessPlanSummary: finalFoundation.businessPlanSummary,
+      })
+
+      await fetch(`/api/launch/${launchId}/asset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'foundation',
+          title: 'Business Foundation',
+          content: assetContent,
+          isApproved: true,
+        }),
+      })
+
+      console.log('[v0] Business foundation saved to assets')
+    } catch (error) {
+      console.error('[v0] Failed to save foundation to assets:', error)
+    }
 
     setStage('completed')
     onComplete(finalFoundation)
@@ -608,6 +639,46 @@ export function Step1BusinessBuilder({ launchName, launchId, onComplete }: Step1
                       <p className="text-white text-sm flex-1">{businessFoundation.whoYouServe}</p>
                       <button
                         onClick={() => handleEditField('whoYouServe')}
+                        className="p-2 rounded-lg text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-white/[0.05] transition flex-shrink-0"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Problem Solved */}
+                <div className="group">
+                  <p className="text-xs font-medium text-slate-400 mb-2">Problem Solved</p>
+                  {editingField === 'problemSolved' ? (
+                    <div className="flex gap-2">
+                      <textarea
+                        value={editValues.problemSolved || ''}
+                        onChange={(e) => setEditValues({ ...editValues, problemSolved: e.target.value })}
+                        className="flex-1 rounded-lg border border-sky-400/50 bg-white/[0.05] px-3 py-2 text-white text-sm focus:outline-none focus:border-sky-400 resize-none"
+                        rows={2}
+                        autoFocus
+                      />
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => handleSaveEdit('problemSolved')}
+                          className="p-2 rounded-lg bg-emerald-400/20 text-emerald-400 hover:bg-emerald-400/30 transition"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setEditingField(null)}
+                          className="p-2 rounded-lg bg-slate-400/20 text-slate-400 hover:bg-slate-400/30 transition"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start justify-between">
+                      <p className="text-white text-sm flex-1">{businessFoundation.problemSolved || 'Not specified'}</p>
+                      <button
+                        onClick={() => handleEditField('problemSolved')}
                         className="p-2 rounded-lg text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-white/[0.05] transition flex-shrink-0"
                       >
                         <Edit2 className="h-4 w-4" />

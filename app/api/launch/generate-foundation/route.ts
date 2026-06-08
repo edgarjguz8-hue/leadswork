@@ -28,6 +28,7 @@ Return ONLY valid JSON with this exact structure (no markdown, no code blocks):
     "description": "1-2 sentence business description",
     "whatYouSell": "Products/services description",
     "whoYouServe": "Target customer description",
+    "problemSolved": "The specific problem this business solves",
     "revenueModel": "How the business generates revenue",
     "simplePricing": "Simple pricing structure (e.g., $29/month starter plan)",
     "businessPlanSummary": "2-3 sentence executive summary"
