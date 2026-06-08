@@ -43,6 +43,8 @@ interface Launch {
   industry: string
   progress: number
   description: string
+  status: string
+  isApproved: boolean
   steps: Step[]
 }
 
@@ -67,6 +69,10 @@ export default function LaunchDashboard() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [businessFoundation, setBusinessFoundation] = useState<any>(null)
+  const [saving, setSaving] = useState(false)
+  const [approving, setApproving] = useState(false)
+  const [completing, setCompleting] = useState(false)
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (!session?.user) {
@@ -103,6 +109,80 @@ export default function LaunchDashboard() {
       setError('Error loading launch. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const saveLaunch = async () => {
+    try {
+      setSaving(true)
+      const response = await fetch(`/api/launch/${params.id}/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save' }),
+      })
+
+      if (response.ok) {
+        setSaveMessage('Progress saved successfully!')
+        setTimeout(() => setSaveMessage(null), 2000)
+      } else {
+        console.error('[v0] Failed to save launch')
+        setSaveMessage('Failed to save progress')
+      }
+    } catch (error) {
+      console.error('[v0] Error saving launch:', error)
+      setSaveMessage('Error saving progress')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const approveLaunch = async () => {
+    try {
+      setApproving(true)
+      const response = await fetch(`/api/launch/${params.id}/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve' }),
+      })
+
+      if (response.ok) {
+        setSaveMessage('Launch approved!')
+        setTimeout(() => setSaveMessage(null), 2000)
+        await fetchLaunch()
+      } else {
+        console.error('[v0] Failed to approve launch')
+        setSaveMessage('Failed to approve launch')
+      }
+    } catch (error) {
+      console.error('[v0] Error approving launch:', error)
+      setSaveMessage('Error approving launch')
+    } finally {
+      setApproving(false)
+    }
+  }
+
+  const completeLaunch = async () => {
+    try {
+      setCompleting(true)
+      const response = await fetch(`/api/launch/${params.id}/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'complete' }),
+      })
+
+      if (response.ok) {
+        setSaveMessage('Launch marked as complete and launched!')
+        setTimeout(() => setSaveMessage(null), 2000)
+        await fetchLaunch()
+      } else {
+        console.error('[v0] Failed to complete launch')
+        setSaveMessage('Failed to complete launch')
+      }
+    } catch (error) {
+      console.error('[v0] Error completing launch:', error)
+      setSaveMessage('Error completing launch')
+    } finally {
+      setCompleting(false)
     }
   }
 
@@ -208,7 +288,82 @@ export default function LaunchDashboard() {
             </button>
             <h1 className="text-xl font-semibold text-white">{launch.name}</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Save Message Indicator */}
+            {saveMessage && (
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className={`text-xs font-medium px-3 py-1.5 rounded-lg ${
+                  saveMessage.includes('successfully') || saveMessage.includes('approved') || saveMessage.includes('launched')
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-red-500/20 text-red-400'
+                }`}
+              >
+                {saveMessage}
+              </motion.div>
+            )}
+
+            {/* Action Buttons */}
+            <button
+              onClick={saveLaunch}
+              disabled={saving}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-sky-500/20 border border-sky-500/30 text-sky-400 hover:bg-sky-500/30 hover:border-sky-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <span className="h-3.5 w-3.5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4" />
+                  Save
+                </>
+              )}
+            </button>
+
+            {!launch?.isApproved && (
+              <button
+                onClick={approveLaunch}
+                disabled={approving}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-400 hover:bg-purple-500/30 hover:border-purple-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {approving ? (
+                  <>
+                    <span className="h-3.5 w-3.5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                    Approving...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Approve
+                  </>
+                )}
+              </button>
+            )}
+
+            {launch?.status !== 'launched' && (
+              <button
+                onClick={completeLaunch}
+                disabled={completing}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 hover:border-emerald-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {completing ? (
+                  <>
+                    <span className="h-3.5 w-3.5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                    Completing...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Mark Complete
+                  </>
+                )}
+              </button>
+            )}
+
             <button
               onClick={() => setShowDeleteDialog(true)}
               className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition"

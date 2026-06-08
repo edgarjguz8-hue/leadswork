@@ -134,6 +134,9 @@ export const businessLaunch = pgTable('businessLaunch', {
   completedSteps: text('completedSteps').notNull().default('[]'), // JSON array of completed step IDs
   progress: integer('progress').notNull().default(0), // 0-100
   status: text('status').notNull().default('in_progress'), // in_progress, launched, paused
+  isApproved: boolean('isApproved').notNull().default(false),
+  approvedAt: timestamp('approvedAt'),
+  lastSavedAt: timestamp('lastSavedAt').notNull().defaultNow(),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 })
