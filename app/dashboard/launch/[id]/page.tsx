@@ -16,6 +16,7 @@ import {
 import { motion } from 'framer-motion'
 import { AIToolsGrid } from '@/components/AIToolsGrid'
 import { Step1BusinessBuilder } from '@/components/Step1BusinessBuilder'
+import { Step2BrandBuilder } from '@/components/Step2BrandBuilder'
 import { BusinessAssistant } from '@/components/BusinessAssistant'
 import { BusinessAssets } from '@/components/BusinessAssets'
 
@@ -760,6 +761,12 @@ export default function LaunchDashboard() {
                     {/* Step 1: Business Builder */}
                     {step.stepNumber === 1 ? (
                       <Step1BusinessBuilder
+                        launchName={launch?.name || ''}
+                        launchId={launch?.id || ''}
+                        onComplete={() => fetchLaunch()}
+                      />
+                    ) : step.stepNumber === 2 ? (
+                      <Step2BrandBuilder
                         launchName={launch?.name || ''}
                         launchId={launch?.id || ''}
                         onComplete={() => fetchLaunch()}
