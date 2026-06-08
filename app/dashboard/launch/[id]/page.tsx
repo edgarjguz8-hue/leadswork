@@ -17,6 +17,7 @@ import { motion } from 'framer-motion'
 import { AIToolsGrid } from '@/components/AIToolsGrid'
 import { Step1BusinessBuilder } from '@/components/Step1BusinessBuilder'
 import { BusinessAssistant } from '@/components/BusinessAssistant'
+import { BusinessAssets } from '@/components/BusinessAssets'
 
 interface Step {
   id: string
@@ -46,6 +47,14 @@ interface Launch {
   status: string
   isApproved: boolean
   steps: Step[]
+  assets?: Array<{
+    id: string
+    type: string
+    title: string
+    content?: string
+    isApproved: boolean
+    lastUpdatedAt: string
+  }>
 }
 
 // Map step numbers to section keys for AI tools
@@ -73,6 +82,7 @@ export default function LaunchDashboard() {
   const [approving, setApproving] = useState(false)
   const [completing, setCompleting] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [assetsLoading, setAssetsLoading] = useState(false)
 
   useEffect(() => {
     if (!session?.user) {
@@ -99,6 +109,9 @@ export default function LaunchDashboard() {
         const data = await response.json()
         console.log('[v0] Launch fetched successfully:', data.id)
         setLaunch(data)
+        
+        // Fetch assets for this launch
+        fetchAssets(launchId)
       } else {
         const errorData = await response.json()
         console.error('[v0] Failed to fetch launch:', response.status, errorData)
@@ -109,6 +122,25 @@ export default function LaunchDashboard() {
       setError('Error loading launch. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchAssets = async (launchId: string) => {
+    try {
+      setAssetsLoading(true)
+      const response = await fetch(`/api/launch/${launchId}/asset`)
+      
+      if (response.ok) {
+        const assets = await response.json()
+        console.log('[v0] Assets fetched:', assets.length)
+        setLaunch(prev => prev ? { ...prev, assets } : null)
+      } else {
+        console.error('[v0] Failed to fetch assets')
+      }
+    } catch (error) {
+      console.error('[v0] Error fetching assets:', error)
+    } finally {
+      setAssetsLoading(false)
     }
   }
 
@@ -787,6 +819,15 @@ export default function LaunchDashboard() {
           </div>
         </motion.div>
       </div>
+
+      {/* Business Assets Section */}
+      {launch?.assets && (
+        <BusinessAssets
+          launchId={String(params.id)}
+          assets={launch.assets}
+          onAssetUpdated={() => fetchAssets(String(params.id))}
+        />
+      )}
 
       {/* Business Assistant Chat */}
       {aiAssistantActive && (

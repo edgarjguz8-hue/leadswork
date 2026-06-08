@@ -200,11 +200,26 @@ export const launchChat = pgTable('launchChat', {
   createdAt: timestamp('createdAt').notNull().defaultNow(),
 })
 
+export const launchAsset = pgTable('launchAsset', {
+  id: text('id').primaryKey(),
+  launchId: text('launchId')
+    .notNull()
+    .references(() => businessLaunch.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // 'foundation', 'brand', 'packages', 'website', 'contact', 'plan'
+  title: text('title').notNull(),
+  content: text('content'), // HTML or JSON content
+  isApproved: boolean('isApproved').notNull().default(false),
+  approvedAt: timestamp('approvedAt'),
+  lastUpdatedAt: timestamp('lastUpdatedAt').notNull().defaultNow(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+})
+
 // --- Relations ---
 
 export const businessLaunchRelations = relations(businessLaunch, ({ many }) => ({
   steps: many(launchStep),
   chats: many(launchChat),
+  assets: many(launchAsset),
 }))
 
 export const launchStepRelations = relations(launchStep, ({ one, many }) => ({
@@ -239,5 +254,12 @@ export const launchChatRelations = relations(launchChat, ({ one }) => ({
   step: one(launchStep, {
     fields: [launchChat.stepId],
     references: [launchStep.id],
+  }),
+}))
+
+export const launchAssetRelations = relations(launchAsset, ({ one }) => ({
+  launch: one(businessLaunch, {
+    fields: [launchAsset.launchId],
+    references: [businessLaunch.id],
   }),
 }))
