@@ -104,29 +104,48 @@ export default function LaunchDashboard() {
       setLoading(true)
       setError(null)
       
-      const launchId = params.id
+      const launchId = params.id as string
       console.log('[v0] Fetching launch:', launchId)
       
+      // Try to fetch from database
       const response = await fetch(`/api/launch/${launchId}`)
       
       if (response.ok) {
         const data = await response.json()
-        console.log('[v0] Launch fetched successfully:', data.id)
+        console.log('[v0] Launch fetched from database:', data.id)
         setLaunch(data)
         
         // Fetch assets for this launch
         fetchAssets(launchId)
+        setLoading(false)
+        return
       } else {
-        const errorData = await response.json()
-        console.error('[v0] Failed to fetch launch:', response.status, errorData)
-        setError(`Failed to load launch: ${errorData.error || 'Unknown error'}`)
+        console.warn('[v0] Failed to fetch from database:', response.status)
       }
     } catch (error) {
-      console.error('[v0] Error fetching launch:', error)
-      setError('Error loading launch. Please try again.')
-    } finally {
-      setLoading(false)
+      console.warn('[v0] Error fetching from database:', error)
     }
+
+    // Fallback to localStorage
+    try {
+      const launchId = params.id as string
+      const localLaunch = localStorage.getItem(`launch-${launchId}`)
+      
+      if (localLaunch) {
+        const data = JSON.parse(localLaunch)
+        console.log('[v0] Launch loaded from localStorage:', data.id)
+        setLaunch(data)
+        setLoading(false)
+        return
+      }
+    } catch (error) {
+      console.warn('[v0] Error loading from localStorage:', error)
+    }
+
+    // If neither database nor localStorage have the launch, show error with option to create new
+    console.error('[v0] Launch not found in database or localStorage')
+    setError('Launch not found')
+    setLoading(false)
   }
 
   const fetchAssets = async (launchId: string) => {

@@ -23,10 +23,47 @@ export default function LaunchPage() {
   }, [session, isPending, router])
 
   const createDefaultLaunchAndRedirect = async () => {
+    const launchId = nanoid()
+    console.log('[v0] Creating default launch:', launchId)
+    
+    // Create local launch object immediately
+    const defaultLaunch = {
+      id: launchId,
+      userId: session?.user?.id,
+      name: 'Untitled Business',
+      description: '',
+      businessType: '',
+      industry: '',
+      location: '',
+      completedSteps: [],
+      progress: 0,
+      status: 'draft',
+      isApproved: false,
+      currentStep: 1,
+      steps: Array.from({ length: 5 }, (_, i) => ({
+        id: `step-${i + 1}`,
+        stepNumber: i + 1,
+        title: ['Business Foundation', 'Brand & Identity', 'Service Offerings', 'Website Builder', 'Launch Strategy'][i],
+        description: '',
+        isCompleted: false,
+        progress: 0,
+        subtasks: [],
+      })),
+      assets: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    // Save to localStorage immediately
     try {
-      const launchId = nanoid()
-      console.log('[v0] Creating default launch:', launchId)
-      
+      localStorage.setItem(`launch-${launchId}`, JSON.stringify(defaultLaunch))
+      console.log('[v0] Launch saved to localStorage:', launchId)
+    } catch (error) {
+      console.error('[v0] Failed to save to localStorage:', error)
+    }
+
+    // Attempt database save in background (non-blocking)
+    try {
       const response = await fetch('/api/launch/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -42,19 +79,16 @@ export default function LaunchPage() {
 
       if (response.ok) {
         const result = await response.json()
-        console.log('[v0] Launch created:', result.launchId)
-        router.push(`/dashboard/launch/${result.launchId}`)
+        console.log('[v0] Launch created in database:', result.launchId)
       } else {
-        console.error('[v0] Failed to create launch:', response.status)
-        // Fallback: still redirect to allow dashboard to load with local state
-        router.push(`/dashboard/launch/${launchId}`)
+        console.warn('[v0] Database creation failed, using localStorage fallback')
       }
     } catch (error) {
-      console.error('[v0] Error creating launch:', error)
-      // Fallback: redirect anyway - dashboard will handle with local state
-      const fallbackId = nanoid()
-      router.push(`/dashboard/launch/${fallbackId}`)
+      console.warn('[v0] Database creation error, using localStorage fallback:', error)
     }
+
+    // Redirect immediately to dashboard
+    router.push(`/dashboard/launch/${launchId}`)
   }
 
   return (
