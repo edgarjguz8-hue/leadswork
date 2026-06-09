@@ -330,22 +330,22 @@ export default function LaunchDashboard() {
   const nextTodo = getNextTodo()
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a1220]">
       {/* Modern Header */}
-      <motion.div className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+      <motion.div className="sticky top-0 z-50 border-b border-white/10 bg-[#0a1220]/80 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             {/* Left */}
             <div className="flex items-center gap-4 flex-1 min-w-0">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="inline-flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex-shrink-0"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
               <div className="min-w-0">
-                <h1 className="text-sm font-semibold text-foreground truncate">{launch.name}</h1>
-                <p className="text-xs text-muted-foreground mt-0.5">{launch.industry || 'Business Launch'}</p>
+                <h1 className="text-sm font-semibold text-white truncate">{launch.name}</h1>
+                <p className="text-xs text-slate-400 mt-0.5">{launch.industry || 'Business Launch'}</p>
               </div>
             </div>
 
@@ -358,7 +358,7 @@ export default function LaunchDashboard() {
                   className={`text-xs font-medium px-2.5 py-1.5 rounded-md ${
                     saveMessage.includes('successfully') || saveMessage.includes('approved')
                       ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-destructive/20 text-destructive'
+                      : 'bg-red-500/20 text-red-400'
                   }`}
                 >
                   {saveMessage}
@@ -367,10 +367,10 @@ export default function LaunchDashboard() {
               <button
                 onClick={saveLaunch}
                 disabled={saving}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-sky-400/10 border border-sky-400/30 text-sky-400 hover:bg-sky-400/20 transition-colors disabled:opacity-50"
               >
                 {saving ? (
-                  <span className="h-3 w-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span className="h-3 w-3 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <Check className="h-3.5 w-3.5" />
                 )}
@@ -378,7 +378,7 @@ export default function LaunchDashboard() {
               </button>
               <button
                 onClick={() => signOut()}
-                className="inline-flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
               >
                 <LogOut className="h-5 w-5" />
               </button>
@@ -399,9 +399,9 @@ export default function LaunchDashboard() {
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                className="h-12 w-12 rounded-full border-2 border-border border-t-accent mx-auto mb-4"
+                className="h-12 w-12 rounded-full border-2 border-white/10 border-t-sky-400 mx-auto mb-4"
               />
-              <p className="text-sm text-muted-foreground">Loading your launch...</p>
+              <p className="text-sm text-slate-400">Loading your launch...</p>
             </div>
           </motion.div>
         )}
@@ -410,12 +410,12 @@ export default function LaunchDashboard() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-lg border border-destructive/30 bg-destructive/10 p-6 text-center"
+            className="rounded-lg border border-red-500/30 bg-red-500/10 p-6 text-center"
           >
-            <p className="text-sm text-destructive font-medium mb-4">{error}</p>
+            <p className="text-sm text-red-400 font-medium mb-4">{error}</p>
             <button
               onClick={() => router.push('/dashboard')}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-sky-400 text-[#0a1220] hover:bg-sky-300 transition-colors"
             >
               Start New Launch
             </button>
@@ -429,48 +429,65 @@ export default function LaunchDashboard() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-lg border border-border bg-card p-4"
+                className="rounded-lg border border-white/10 bg-white/[0.03] p-4 backdrop-blur"
               >
-                <p className="text-xs font-medium text-muted-foreground mb-2">PROGRESS</p>
-                <p className="text-3xl font-bold text-foreground">{launch.progress}%</p>
-                <p className="text-xs text-muted-foreground mt-2">{launch.steps.filter(s => s.isCompleted).length}/{launch.steps.length} steps</p>
+                <p className="text-xs font-medium text-slate-400 mb-2">PROGRESS</p>
+                <p className="text-3xl font-bold text-white">{launch.progress}%</p>
+                <p className="text-xs text-slate-400 mt-2">{launch.steps.filter(s => s.isCompleted).length}/{launch.steps.length} steps</p>
               </motion.div>
 
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 }}
-                className="rounded-lg border border-border bg-card p-4"
+                className="rounded-lg border border-white/10 bg-white/[0.03] p-4 backdrop-blur"
               >
-                <p className="text-xs font-medium text-muted-foreground mb-2">STATUS</p>
-                <p className="text-lg font-semibold text-foreground capitalize">{launch.status}</p>
-                <p className="text-xs text-muted-foreground mt-2">{launch.isApproved ? 'Approved' : 'In Progress'}</p>
+                <p className="text-xs font-medium text-slate-400 mb-2">STATUS</p>
+                <p className="text-lg font-semibold text-white capitalize">{launch.status}</p>
+                <p className="text-xs text-slate-400 mt-2">{launch.isApproved ? 'Approved' : 'In Progress'}</p>
               </motion.div>
 
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="rounded-lg border border-border bg-card p-4"
+                className="rounded-lg border border-white/10 bg-white/[0.03] p-4 backdrop-blur"
               >
-                <p className="text-xs font-medium text-muted-foreground mb-2">NEXT STEP</p>
-                <p className="text-lg font-semibold text-foreground">{launch.steps.find(s => !s.isCompleted)?.title || 'Complete'}</p>
-                <p className="text-xs text-muted-foreground mt-2">Keep building</p>
+                <p className="text-xs font-medium text-slate-400 mb-2">NEXT STEP</p>
+                <p className="text-lg font-semibold text-white">{launch.steps.find(s => !s.isCompleted)?.title || 'Complete'}</p>
+                <p className="text-xs text-slate-400 mt-2">Keep building</p>
               </motion.div>
             </div>
+
+            {/* AI Assistant Chatbox */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="rounded-lg border border-white/10 bg-white/[0.03] p-6 backdrop-blur"
+            >
+              <BusinessAssistant
+                launchId={launch.id}
+                businessFoundation={{
+                  name: launch.name,
+                  industry: launch.industry,
+                  description: launch.description,
+                }}
+              />
+            </motion.div>
 
             {/* Steps Container */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="border border-border rounded-lg bg-card overflow-hidden"
+              transition={{ delay: 0.2 }}
+              className="border border-white/10 rounded-lg bg-white/[0.03] overflow-hidden backdrop-blur"
             >
-              <div className="border-b border-border bg-muted/30 px-6 py-4">
-                <h2 className="text-lg font-semibold text-foreground">Launch Steps</h2>
+              <div className="border-b border-white/10 bg-white/[0.05] px-6 py-4">
+                <h2 className="text-lg font-semibold text-white">Launch Steps</h2>
               </div>
 
-              <div className="divide-y divide-border">
+              <div className="divide-y divide-white/10">
                 {launch.steps.map((step, index) => (
                   <motion.div
                     key={step.id}
@@ -480,29 +497,29 @@ export default function LaunchDashboard() {
                   >
                     <button
                       onClick={() => toggleStepExpansion(step.stepNumber)}
-                      className="w-full px-6 py-4 text-left hover:bg-muted/50 transition-colors flex items-center justify-between group"
+                      className="w-full px-6 py-4 text-left hover:bg-white/[0.05] transition-colors flex items-center justify-between group"
                     >
                       <div className="flex items-center gap-4 flex-1 min-w-0">
                         <div className={`flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center text-sm font-semibold transition-colors ${
                           step.isCompleted
                             ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                             : index < 2
-                              ? 'bg-accent/20 text-accent border border-accent/30'
-                              : 'bg-muted text-muted-foreground'
+                              ? 'bg-sky-400/20 text-sky-400 border border-sky-400/30'
+                              : 'bg-white/10 text-slate-400'
                         }`}>
                           {step.isCompleted ? <Check className="h-5 w-5" /> : step.stepNumber}
                         </div>
                         <div className="min-w-0">
                           <h3 className={`text-sm font-semibold transition-colors ${
-                            step.isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'
+                            step.isCompleted ? 'text-slate-400 line-through' : 'text-white'
                           }`}>
                             {step.title}
                           </h3>
-                          <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">{step.description}</p>
                         </div>
                       </div>
                       <ChevronRight
-                        className={`h-5 w-5 text-muted-foreground flex-shrink-0 transition-transform ${
+                        className={`h-5 w-5 text-slate-500 flex-shrink-0 transition-transform ${
                           expandedSteps.includes(step.stepNumber) ? 'rotate-90' : ''
                         }`}
                       />
@@ -513,7 +530,7 @@ export default function LaunchDashboard() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="border-t border-border px-6 py-4 bg-muted/20"
+                        className="border-t border-white/10 px-6 py-4 bg-white/[0.02]"
                       >
                         {/* Step Content Rendering */}
                         {step.stepNumber === 1 ? (
