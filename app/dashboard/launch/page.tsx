@@ -1,15 +1,14 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from '@/lib/auth-client'
-import { LaunchOnboarding } from './onboarding'
 import { Loader } from 'lucide-react'
+import { nanoid } from 'nanoid'
 
 export default function LaunchPage() {
   const router = useRouter()
   const { data: session, isPending } = useSession()
-  const [hasExistingLaunch, setHasExistingLaunch] = useState<boolean | null>(null)
 
   useEffect(() => {
     if (isPending) return
@@ -19,36 +18,51 @@ export default function LaunchPage() {
       return
     }
 
-    checkForExistingLaunch()
+    // Automatically create a default launch and redirect to dashboard
+    createDefaultLaunchAndRedirect()
   }, [session, isPending, router])
 
-  const checkForExistingLaunch = async () => {
+  const createDefaultLaunchAndRedirect = async () => {
     try {
-      const response = await fetch('/api/launch/list')
+      const launchId = nanoid()
+      console.log('[v0] Creating default launch:', launchId)
+      
+      const response = await fetch('/api/launch/onboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessName: 'Untitled Business',
+          businessType: '',
+          industry: '',
+          description: '',
+          targetMarket: '',
+          businessGoal: '',
+        }),
+      })
+
       if (response.ok) {
-        const data = await response.json()
-        // If user has existing launches, show them the onboarding to create a new one
-        // (they can access existing ones from the dashboard)
-        setHasExistingLaunch(false)
+        const result = await response.json()
+        console.log('[v0] Launch created:', result.launchId)
+        router.push(`/dashboard/launch/${result.launchId}`)
       } else {
-        setHasExistingLaunch(false)
+        console.error('[v0] Failed to create launch:', response.status)
+        // Fallback: still redirect to allow dashboard to load with local state
+        router.push(`/dashboard/launch/${launchId}`)
       }
     } catch (error) {
-      console.error('[v0] Error checking for existing launch:', error)
-      setHasExistingLaunch(false)
+      console.error('[v0] Error creating launch:', error)
+      // Fallback: redirect anyway - dashboard will handle with local state
+      const fallbackId = nanoid()
+      router.push(`/dashboard/launch/${fallbackId}`)
     }
   }
 
-  if (isPending || hasExistingLaunch === null) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0a1220]">
-        <div className="text-center">
-          <Loader className="h-8 w-8 text-sky-400 animate-spin mx-auto mb-3" />
-          <p className="text-slate-400">Loading...</p>
-        </div>
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#0a1220]">
+      <div className="text-center">
+        <Loader className="h-8 w-8 text-sky-400 animate-spin mx-auto mb-3" />
+        <p className="text-slate-400">Starting your launch...</p>
       </div>
-    )
-  }
-
-  return <LaunchOnboarding />
+    </div>
+  )
 }

@@ -23,6 +23,8 @@ interface BusinessFoundation {
   businessName: string
   recommendedDomain: string
   description: string
+  industry: string
+  location: string
   whatYouSell: string
   whoYouServe: string
   problemSolved: string
@@ -579,6 +581,88 @@ export function Step1BusinessBuilder({ launchName, launchId, onComplete }: Step1
                     </button>
                   </div>
                 )}
+              </div>
+
+              {/* Industry & Location Section */}
+              <div className="space-y-4 border-t border-white/10 pt-6">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Business Details</p>
+                {/* Industry */}
+                <div className="group">
+                  <p className="text-xs font-medium text-slate-400 mb-2">Industry</p>
+                  {editingField === 'industry' ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={editValues.industry || ''}
+                        onChange={(e) => setEditValues({ ...editValues, industry: e.target.value })}
+                        className="flex-1 rounded-lg border border-sky-400/50 bg-white/[0.05] px-3 py-2 text-white text-sm focus:outline-none focus:border-sky-400"
+                        placeholder="e.g. SaaS, Consulting, Ecommerce"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleSaveEdit('industry')}
+                        className="p-2 rounded-lg bg-emerald-400/20 text-emerald-400 hover:bg-emerald-400/30 transition"
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setEditingField(null)}
+                        className="p-2 rounded-lg bg-slate-400/20 text-slate-400 hover:bg-slate-400/30 transition"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between group">
+                      <p className="text-white">{businessFoundation.industry || 'Not specified'}</p>
+                      <button
+                        onClick={() => handleEditField('industry')}
+                        className="p-2 rounded-lg text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-white/[0.05] transition"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Location */}
+                <div className="group">
+                  <p className="text-xs font-medium text-slate-400 mb-2">Location</p>
+                  {editingField === 'location' ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={editValues.location || ''}
+                        onChange={(e) => setEditValues({ ...editValues, location: e.target.value })}
+                        className="flex-1 rounded-lg border border-sky-400/50 bg-white/[0.05] px-3 py-2 text-white text-sm focus:outline-none focus:border-sky-400"
+                        placeholder="e.g. San Francisco, CA or Remote"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleSaveEdit('location')}
+                        className="p-2 rounded-lg bg-emerald-400/20 text-emerald-400 hover:bg-emerald-400/30 transition"
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setEditingField(null)}
+                        className="p-2 rounded-lg bg-slate-400/20 text-slate-400 hover:bg-slate-400/30 transition"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between group">
+                      <p className="text-white">{businessFoundation.location || 'Not specified'}</p>
+                      <button
+                        onClick={() => handleEditField('location')}
+                        className="p-2 rounded-lg text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-white/[0.05] transition"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Market Section */}
