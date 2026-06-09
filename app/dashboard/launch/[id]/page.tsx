@@ -330,30 +330,33 @@ export default function LaunchDashboard() {
   const nextTodo = getNextTodo()
 
   return (
-    <div className="min-h-screen bg-[#0a1220]">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a1220] via-[#0f1729] to-[#0a1220]">
       {/* Header */}
-      <div className="border-b border-white/10 bg-white/[0.02] backdrop-blur sticky top-0 z-50">
+      <div className="border-b border-white/5 bg-black/30 backdrop-blur-md sticky top-0 z-50">
         <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/dashboard')}
-              className="text-slate-400 hover:text-white transition"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <h1 className="text-xl font-semibold text-white">{launch.name}</h1>
+            <div>
+              <h1 className="text-lg font-bold text-white">{launch.name}</h1>
+              <p className="text-xs text-slate-400 mt-0.5">{launch.industry || 'Business Launch'}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* Save Message Indicator */}
             {saveMessage && (
               <motion.div
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                className={`text-xs font-medium px-3 py-1.5 rounded-lg ${
+                className={`text-xs font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap ${
                   saveMessage.includes('successfully') || saveMessage.includes('approved') || saveMessage.includes('launched')
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : 'bg-red-500/20 text-red-400'
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-red-500/20 text-red-400 border border-red-500/30'
                 }`}
               >
                 {saveMessage}
@@ -364,12 +367,12 @@ export default function LaunchDashboard() {
             <button
               onClick={saveLaunch}
               disabled={saving}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-sky-500/20 border border-sky-500/30 text-sky-400 hover:bg-sky-500/30 hover:border-sky-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-400 hover:bg-sky-500/20 hover:border-sky-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
               {saving ? (
                 <>
-                  <span className="h-3.5 w-3.5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
-                  Saving...
+                  <span className="h-3 w-3 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+                  Saving
                 </>
               ) : (
                 <>
@@ -383,12 +386,12 @@ export default function LaunchDashboard() {
               <button
                 onClick={approveLaunch}
                 disabled={approving}
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-400 hover:bg-purple-500/30 hover:border-purple-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 {approving ? (
                   <>
-                    <span className="h-3.5 w-3.5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
-                    Approving...
+                    <span className="h-3 w-3 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                    Approving
                   </>
                 ) : (
                   <>
@@ -403,17 +406,17 @@ export default function LaunchDashboard() {
               <button
                 onClick={completeLaunch}
                 disabled={completing}
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 hover:border-emerald-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 {completing ? (
                   <>
-                    <span className="h-3.5 w-3.5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-                    Completing...
+                    <span className="h-3 w-3 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                    Completing
                   </>
                 ) : (
                   <>
                     <Check className="h-4 w-4" />
-                    Mark Complete
+                    Launch
                   </>
                 )}
               </button>
@@ -421,14 +424,15 @@ export default function LaunchDashboard() {
 
             <button
               onClick={() => setShowDeleteDialog(true)}
-              className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition"
               title="Delete launch"
             >
               <Trash2 className="h-5 w-5" />
             </button>
             <button
               onClick={() => signOut()}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
+              title="Sign out"
             >
               <LogOut className="h-5 w-5" />
             </button>
@@ -467,11 +471,11 @@ export default function LaunchDashboard() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-900/50 to-slate-950/80 p-8 shadow-lg"
+          className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-8 shadow-xl shadow-black/20"
         >
           <div className="grid gap-8 lg:grid-cols-[1fr_2.5fr]">
             {/* LEFT COLUMN - Progress & Roadmap */}
-            <div className="flex flex-col">
+            <div className="flex flex-col space-y-8">
               {/* Business Header */}
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -735,38 +739,46 @@ export default function LaunchDashboard() {
           transition={{ delay: 0.3 }}
           className="mt-12"
         >
-          <h3 className="text-lg font-semibold text-white mb-4">All Steps</h3>
-          <div className="space-y-3">
+          <h3 className="text-xl font-bold text-white mb-6">All Steps</h3>
+          <div className="space-y-4">
             {launch?.steps.map((step, index) => (
               <motion.div
                 key={step.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-900/50 to-slate-950/80 overflow-hidden hover:border-slate-600/50 transition"
+                className={`rounded-lg border transition overflow-hidden ${
+                  step.isCompleted
+                    ? 'border-emerald-500/20 bg-emerald-500/5'
+                    : index === 0 || index === 1
+                      ? 'border-sky-500/20 bg-sky-500/5 ring-1 ring-inset ring-sky-500/10'
+                      : 'border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.04]'
+                }`}
               >
                 {/* Step Header */}
                 <button
                   onClick={() => toggleStepExpansion(step.stepNumber)}
-                  className="w-full p-4 text-left hover:bg-slate-800/30 transition flex items-center justify-between"
+                  className="w-full p-4 text-left hover:bg-white/[0.02] transition flex items-center justify-between group"
                 >
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/20">
-                      {step.isCompleted ? (
-                        <Check className="h-5 w-5 text-emerald-400" />
-                      ) : (
-                        <span className="text-xs font-bold text-sky-400">{step.stepNumber}</span>
-                      )}
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg flex-shrink-0 font-semibold text-sm transition ${
+                      step.isCompleted
+                        ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30'
+                        : index === 0 || index === 1
+                          ? 'bg-sky-500/20 text-sky-400 ring-1 ring-sky-500/30'
+                          : 'bg-slate-700/30 text-slate-500'
+                    }`}>
+                      {step.isCompleted ? <Check className="h-5 w-5" /> : step.stepNumber}
                     </div>
-                    <div className="text-left">
+                    <div className="min-w-0">
                       <h4 className={`text-sm font-semibold ${step.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
                         {step.title}
                       </h4>
-                      <p className="text-xs text-slate-400 mt-0.5">{step.description}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{step.description}</p>
                     </div>
                   </div>
                   <ChevronRight
-                    className={`h-5 w-5 text-slate-600 transition ${
+                    className={`h-5 w-5 text-slate-600 transition flex-shrink-0 ${
                       expandedSteps.includes(step.stepNumber) ? 'rotate-90' : ''
                     }`}
                   />
@@ -778,7 +790,7 @@ export default function LaunchDashboard() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="border-t border-slate-700/50 p-4 space-y-3 bg-slate-800/20"
+                    className="border-t border-white/10 p-4 bg-white/[0.01]"
                   >
                     {/* Step 1: Business Builder */}
                     {step.stepNumber === 1 ? (
