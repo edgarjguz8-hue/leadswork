@@ -34,6 +34,11 @@ export async function POST(req: Request) {
         completedSteps: '[]',
         progress: 0,
         status: 'draft',
+        isApproved: false,
+        approvedAt: null,
+        lastSavedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       console.log('[v0] Business launch created in database:', launchId)
     } catch (dbError) {
