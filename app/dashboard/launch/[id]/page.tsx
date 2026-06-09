@@ -330,610 +330,256 @@ export default function LaunchDashboard() {
   const nextTodo = getNextTodo()
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a1220] via-[#0f1729] to-[#0a1220]">
-      {/* Header */}
-      <div className="border-b border-white/5 bg-black/30 backdrop-blur-md sticky top-0 z-50">
-        <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <div>
-              <h1 className="text-lg font-bold text-white">{launch.name}</h1>
-              <p className="text-xs text-slate-400 mt-0.5">{launch.industry || 'Business Launch'}</p>
+    <div className="min-h-screen bg-background">
+      {/* Modern Header */}
+      <motion.div className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            {/* Left */}
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="inline-flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex-shrink-0"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div className="min-w-0">
+                <h1 className="text-sm font-semibold text-foreground truncate">{launch.name}</h1>
+                <p className="text-xs text-muted-foreground mt-0.5">{launch.industry || 'Business Launch'}</p>
+              </div>
+            </div>
+
+            {/* Right */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {saveMessage && (
+                <motion.div
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className={`text-xs font-medium px-2.5 py-1.5 rounded-md ${
+                    saveMessage.includes('successfully') || saveMessage.includes('approved')
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'bg-destructive/20 text-destructive'
+                  }`}
+                >
+                  {saveMessage}
+                </motion.div>
+              )}
+              <button
+                onClick={saveLaunch}
+                disabled={saving}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+              >
+                {saving ? (
+                  <span className="h-3 w-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Check className="h-3.5 w-3.5" />
+                )}
+                Save
+              </button>
+              <button
+                onClick={() => signOut()}
+                className="inline-flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Save Message Indicator */}
-            {saveMessage && (
-              <motion.div
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap ${
-                  saveMessage.includes('successfully') || saveMessage.includes('approved') || saveMessage.includes('launched')
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                }`}
-              >
-                {saveMessage}
-              </motion.div>
-            )}
-
-            {/* Action Buttons */}
-            <button
-              onClick={saveLaunch}
-              disabled={saving}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-400 hover:bg-sky-500/20 hover:border-sky-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-            >
-              {saving ? (
-                <>
-                  <span className="h-3 w-3 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
-                  Saving
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4" />
-                  Save
-                </>
-              )}
-            </button>
-
-            {!launch?.isApproved && (
-              <button
-                onClick={approveLaunch}
-                disabled={approving}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-              >
-                {approving ? (
-                  <>
-                    <span className="h-3 w-3 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
-                    Approving
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-4 w-4" />
-                    Approve
-                  </>
-                )}
-              </button>
-            )}
-
-            {launch?.status !== 'launched' && (
-              <button
-                onClick={completeLaunch}
-                disabled={completing}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-              >
-                {completing ? (
-                  <>
-                    <span className="h-3 w-3 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-                    Completing
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-4 w-4" />
-                    Launch
-                  </>
-                )}
-              </button>
-            )}
-
-            <button
-              onClick={() => setShowDeleteDialog(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition"
-              title="Delete launch"
-            >
-              <Trash2 className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => signOut()}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
-              title="Sign out"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Main Content */}
-      <div className="mx-auto max-w-7xl px-6 py-12">
-        {/* Top Section - Launch Summary */}
-        <div className="grid gap-8 lg:grid-cols-4 mb-16">
-
-
-
-
-        </div>
-
-        {/* Center AI Chatbox Section */}
-        <div className="mb-16">
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        {loading && (
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mx-auto max-w-2xl rounded-[14px] border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-[30px] backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-center items-center min-h-[600px]"
           >
-            <BusinessAssistant
-              launchId={String(params.id)}
-              businessFoundation={businessFoundation}
-            />
+            <div className="text-center">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                className="h-12 w-12 rounded-full border-2 border-border border-t-accent mx-auto mb-4"
+              />
+              <p className="text-sm text-muted-foreground">Loading your launch...</p>
+            </div>
           </motion.div>
-        </div>
+        )}
 
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-lg border border-destructive/30 bg-destructive/10 p-6 text-center"
+          >
+            <p className="text-sm text-destructive font-medium mb-4">{error}</p>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Start New Launch
+            </button>
+          </motion.div>
+        )}
 
-      </div>
-      {/* Main Content - Dashboard Container */}
-      <div className="mx-auto max-w-7xl px-6 py-12">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-8 shadow-xl shadow-black/20"
-        >
-          <div className="grid gap-8 lg:grid-cols-[1fr_2.5fr]">
-            {/* LEFT COLUMN - Progress & Roadmap */}
-            <div className="flex flex-col space-y-8">
-              {/* Business Header */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-8"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/20 border border-sky-500/30">
-                    <Sparkles className="h-5 w-5 text-sky-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-white">{launch?.name}</h2>
-                    <p className="text-xs text-slate-400 capitalize">{launch?.industry}</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Circular Progress Ring */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mb-6 flex justify-center"
-              >
-                <div className="relative h-40 w-40">
-                  <svg className="h-full w-full transform -rotate-90" viewBox="0 0 140 140">
-                    {/* Background circle */}
-                    <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(148, 163, 184, 0.2)" strokeWidth="6" />
-                    {/* Progress circle */}
-                    <motion.circle
-                      cx="70"
-                      cy="70"
-                      r="60"
-                      fill="none"
-                      stroke="#0ea5e9"
-                      strokeWidth="6"
-                      strokeDasharray={`${2 * Math.PI * 60}`}
-                      initial={{ strokeDashoffset: 2 * Math.PI * 60 }}
-                      animate={{
-                        strokeDashoffset: 2 * Math.PI * 60 * (1 - (launch?.progress || 0) / 100),
-                      }}
-                      transition={{ duration: 1.5, ease: 'easeInOut' }}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <p className="text-3xl font-bold text-sky-400">{launch?.progress}%</p>
-                    <p className="text-xs text-slate-400 mt-1">Complete</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Progress Stats */}
+        {launch && (
+          <div className="space-y-6">
+            {/* Top Stats Row */}
+            <div className="grid gap-4 md:grid-cols-3">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-8 text-center"
+                className="rounded-lg border border-border bg-card p-4"
               >
-                <p className="text-sm font-semibold text-white">{launch?.steps.filter(s => s.isCompleted).length} of {launch?.steps.length} Steps Finished</p>
-                <p className="text-xs text-slate-400 mt-1">You're on your way! 🚀</p>
+                <p className="text-xs font-medium text-muted-foreground mb-2">PROGRESS</p>
+                <p className="text-3xl font-bold text-foreground">{launch.progress}%</p>
+                <p className="text-xs text-muted-foreground mt-2">{launch.steps.filter(s => s.isCompleted).length}/{launch.steps.length} steps</p>
               </motion.div>
 
-              {/* Divider */}
-              <div className="mb-8 h-px bg-gradient-to-r from-transparent via-slate-600/50 to-transparent" />
-
-              {/* Launch Roadmap Section */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="rounded-lg border border-border bg-card p-4"
               >
-                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-6">Launch Roadmap</h3>
-                <div className="space-y-4 mb-6">
-                  {launch?.steps.map((step, idx) => (
-                    <motion.div
-                      key={step.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="flex items-center gap-3"
-                    >
-                      <div
-                        className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold transition ${
-                          step.isCompleted
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : idx === 1
-                              ? 'bg-sky-500/30 text-sky-400 ring-1 ring-sky-400/50'
-                              : 'bg-slate-700/30 text-slate-500'
-                        }`}
-                      >
-                        {step.isCompleted ? <Check className="h-3.5 w-3.5" /> : idx + 1}
-                      </div>
-                      <div className="flex-1">
-                        <p className={`text-sm ${step.isCompleted ? 'text-slate-400 line-through' : idx === 1 ? 'text-sky-300 font-medium' : 'text-slate-400'}`}>
-                          Step {idx + 1}: {step.title}
-                        </p>
-                      </div>
-                      <span className={`text-xs font-medium ${step.isCompleted ? 'text-emerald-400' : idx === 1 ? 'text-sky-400' : 'text-slate-500'}`}>
-                        {step.isCompleted ? 'Done' : idx === 1 ? 'Current' : 'Upcoming'}
-                      </span>
-                    </motion.div>
-                  ))}
-                </div>
+                <p className="text-xs font-medium text-muted-foreground mb-2">STATUS</p>
+                <p className="text-lg font-semibold text-foreground capitalize">{launch.status}</p>
+                <p className="text-xs text-muted-foreground mt-2">{launch.isApproved ? 'Approved' : 'In Progress'}</p>
+              </motion.div>
 
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    const firstStep = launch?.steps[0]
-                    if (firstStep && !expandedSteps.includes(firstStep.stepNumber)) {
-                      toggleStepExpansion(firstStep.stepNumber)
-                    }
-                  }}
-                  className="w-full rounded-lg border border-slate-600/50 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-700/30 hover:border-slate-500/50 transition flex items-center justify-center gap-2"
-                >
-                  View All Steps
-                  <ChevronRight className="h-4 w-4" />
-                </motion.button>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="rounded-lg border border-border bg-card p-4"
+              >
+                <p className="text-xs font-medium text-muted-foreground mb-2">NEXT STEP</p>
+                <p className="text-lg font-semibold text-foreground">{launch.steps.find(s => !s.isCompleted)?.title || 'Complete'}</p>
+                <p className="text-xs text-muted-foreground mt-2">Keep building</p>
               </motion.div>
             </div>
 
-            {/* RIGHT COLUMN - Actions & Current Step */}
-            <div className="flex flex-col">
-              {/* Your Next Action Label */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-4"
-              >
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Your Next Action</p>
-              </motion.div>
-
-              {/* Main Card - Business Plan */}
-              {launch?.steps.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 rounded-xl border border-slate-700/50 bg-slate-800/40 p-6"
-                >
-                  <div className="mb-5">
-                    <h3 className="text-xl font-semibold text-white mb-1">{launch.steps[1]?.title || 'Next Step'}</h3>
-                    <p className="text-sm text-slate-400">{launch.steps[1]?.description || 'Build your roadmap to success'}</p>
-                  </div>
-
-                  {/* Checklist */}
-                  <div className="space-y-3 mb-6">
-                    {launch.steps.slice(0, 5).map((step, idx) => (
-                      <motion.div
-                        key={step.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className="flex items-center gap-3"
-                      >
-                        <div className="flex-shrink-0">
-                          {step.isCompleted ? (
-                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-500/50">
-                              <Check className="h-3.5 w-3.5 text-emerald-400" />
-                            </div>
-                          ) : idx === 1 ? (
-                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-500/20 border border-sky-500/50">
-                              <div className="h-1.5 w-1.5 rounded-full bg-sky-400" />
-                            </div>
-                          ) : (
-                            <div className="h-5 w-5 rounded-full border border-slate-600/50 bg-slate-700/30" />
-                          )}
-                        </div>
-                        <span className={`flex-1 text-sm ${step.isCompleted ? 'text-slate-400 line-through' : idx === 1 ? 'text-white font-medium' : 'text-slate-300'}`}>
-                          {step.title}
-                        </span>
-                        <span className={`text-xs font-medium ${step.isCompleted ? 'text-emerald-400' : idx === 1 ? 'text-sky-400' : 'text-slate-500'}`}>
-                          {step.isCompleted ? 'Done' : idx === 1 ? 'Current' : 'Upcoming'}
-                        </span>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  {/* Continue Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => {
-                      if (launch.steps[1] && !expandedSteps.includes(launch.steps[1].stepNumber)) {
-                        toggleStepExpansion(launch.steps[1].stepNumber)
-                      }
-                    }}
-                    className="w-full rounded-lg bg-sky-500 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-600 transition flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20"
-                  >
-                    Continue Building
-                    <ChevronRight className="h-4 w-4" />
-                  </motion.button>
-                </motion.div>
-              )}
-
-              {/* Two Cards Row */}
-              <div className="grid gap-4 mb-6 md:grid-cols-2">
-                {/* AI Assistant Card */}
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  whileHover={{ scale: 1.01 }}
-                  onClick={() => setAiAssistantActive(true)}
-                  className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-5 text-left hover:border-purple-500/30 hover:bg-slate-800/60 transition group"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/20 border border-purple-500/30 mb-4 group-hover:bg-purple-500/30 transition">
-                    <Sparkles className="h-5 w-5 text-purple-400" />
-                  </div>
-                  <h4 className="text-base font-semibold text-white mb-1">AI Assistant</h4>
-                  <p className="text-sm text-slate-400">Ask questions about pricing, marketing, operations, branding, or business strategy.</p>
-                </motion.button>
-
-                {/* Business Snapshot Card */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 }}
-                  className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-5 hover:border-teal-500/30 hover:bg-slate-800/60 transition"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-500/20 border border-teal-500/30 mb-4">
-                    <Target className="h-5 w-5 text-teal-400" />
-                  </div>
-                  <h4 className="text-base font-semibold text-white mb-4">Business Snapshot</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Industry</p>
-                      <p className="text-sm text-slate-300 mt-1">{launch?.industry}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Current Stage</p>
-                      <p className="text-sm text-slate-300 mt-1">Planning</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Launch Goal</p>
-                      <p className="text-sm text-slate-300 mt-1">July 2026</p>
-                    </div>
-                  </div>
-                </motion.div>
+            {/* Steps Container */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="border border-border rounded-lg bg-card overflow-hidden"
+            >
+              <div className="border-b border-border bg-muted/30 px-6 py-4">
+                <h2 className="text-lg font-semibold text-foreground">Launch Steps</h2>
               </div>
 
-              {/* Pro Tip Bar */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="rounded-lg border border-slate-700/50 bg-gradient-to-r from-sky-900/20 to-slate-900/20 px-4 py-3 flex items-center justify-between"
-              >
-                <p className="text-sm text-slate-300">
-                  <span className="font-semibold text-sky-400">Pro Tip:</span> Complete your business plan to unlock AI insights, investor-ready documents, and more.
-                </p>
-                <button className="text-sm font-medium text-sky-400 hover:text-sky-300 transition whitespace-nowrap ml-4">
-                  Learn More
-                </button>
-              </motion.div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* All Steps Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-12"
-        >
-          <h3 className="text-xl font-bold text-white mb-6">All Steps</h3>
-          <div className="space-y-4">
-            {launch?.steps.map((step, index) => (
-              <motion.div
-                key={step.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className={`rounded-lg border transition overflow-hidden ${
-                  step.isCompleted
-                    ? 'border-emerald-500/20 bg-emerald-500/5'
-                    : index === 0 || index === 1
-                      ? 'border-sky-500/20 bg-sky-500/5 ring-1 ring-inset ring-sky-500/10'
-                      : 'border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.04]'
-                }`}
-              >
-                {/* Step Header */}
-                <button
-                  onClick={() => toggleStepExpansion(step.stepNumber)}
-                  className="w-full p-4 text-left hover:bg-white/[0.02] transition flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg flex-shrink-0 font-semibold text-sm transition ${
-                      step.isCompleted
-                        ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30'
-                        : index === 0 || index === 1
-                          ? 'bg-sky-500/20 text-sky-400 ring-1 ring-sky-500/30'
-                          : 'bg-slate-700/30 text-slate-500'
-                    }`}>
-                      {step.isCompleted ? <Check className="h-5 w-5" /> : step.stepNumber}
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className={`text-sm font-semibold ${step.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
-                        {step.title}
-                      </h4>
-                      <p className="text-xs text-slate-500 mt-0.5">{step.description}</p>
-                    </div>
-                  </div>
-                  <ChevronRight
-                    className={`h-5 w-5 text-slate-600 transition flex-shrink-0 ${
-                      expandedSteps.includes(step.stepNumber) ? 'rotate-90' : ''
-                    }`}
-                  />
-                </button>
-
-                {/* Subtasks */}
-                {expandedSteps.includes(step.stepNumber) && (
+              <div className="divide-y divide-border">
+                {launch.steps.map((step, index) => (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="border-t border-white/10 p-4 bg-white/[0.01]"
+                    key={step.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.05 }}
                   >
-                    {/* Step 1: Business Builder */}
-                    {step.stepNumber === 1 ? (
-                      <Step1BusinessBuilder
-                        launchName={launch?.name || ''}
-                        launchId={launch?.id || ''}
-                        onComplete={() => fetchLaunch()}
-                      />
-                    ) : step.stepNumber === 2 ? (
-                      <Step2BrandBuilder
-                        launchName={launch?.name || ''}
-                        launchId={launch?.id || ''}
-                        onComplete={() => fetchLaunch()}
-                      />
-                    ) : step.stepNumber === 3 ? (
-                      <Step3ServiceBuilder
-                        launchName={launch?.name || ''}
-                        launchId={launch?.id || ''}
-                        onComplete={() => fetchLaunch()}
-                      />
-                    ) : step.stepNumber === 4 ? (
-                      <Step4WebsiteBuilder
-                        launchName={launch?.name || ''}
-                        launchId={launch?.id || ''}
-                        onComplete={() => fetchLaunch()}
-                      />
-                    ) : step.stepNumber === 5 ? (
-                      <Step5LaunchStrategy
-                        launchName={launch?.name || ''}
-                        launchId={launch?.id || ''}
-                        onComplete={() => fetchLaunch()}
-                      />
-                    ) : (
-                      <>
-                        {/* AI Tools Section */}
-                        <div>
-                          <AIToolsGrid
-                            section={stepToSection[step.stepNumber as keyof typeof stepToSection] || 'foundation'}
-                            businessContext={`Business: ${launch?.name}, Industry: ${launch?.industry}, Description: ${launch?.description}`}
-                            title={`AI Tools for ${step.title}`}
-                            showAsButtons={true}
-                          />
+                    <button
+                      onClick={() => toggleStepExpansion(step.stepNumber)}
+                      className="w-full px-6 py-4 text-left hover:bg-muted/50 transition-colors flex items-center justify-between group"
+                    >
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div className={`flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center text-sm font-semibold transition-colors ${
+                          step.isCompleted
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : index < 2
+                              ? 'bg-accent/20 text-accent border border-accent/30'
+                              : 'bg-muted text-muted-foreground'
+                        }`}>
+                          {step.isCompleted ? <Check className="h-5 w-5" /> : step.stepNumber}
                         </div>
+                        <div className="min-w-0">
+                          <h3 className={`text-sm font-semibold transition-colors ${
+                            step.isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'
+                          }`}>
+                            {step.title}
+                          </h3>
+                          <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>
+                        </div>
+                      </div>
+                      <ChevronRight
+                        className={`h-5 w-5 text-muted-foreground flex-shrink-0 transition-transform ${
+                          expandedSteps.includes(step.stepNumber) ? 'rotate-90' : ''
+                        }`}
+                      />
+                    </button>
 
-                        {/* Subtasks List */}
-                        <div className="space-y-2">
-                          {step.subtasks.map((subtask) => (
-                            <motion.button
-                              key={subtask.id}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              onClick={() => completeSubtask(step.id, subtask.id)}
-                              className={`w-full flex items-start gap-3 p-3 rounded-md border transition ${
-                                subtask.isCompleted
-                                  ? 'border-emerald-500/20 bg-emerald-500/10 text-slate-400'
-                                  : 'border-slate-700/50 bg-slate-800/40 hover:bg-slate-700/30'
-                              }`}
-                            >
-                              <div className="flex-shrink-0 mt-1">
-                                {subtask.isCompleted ? (
-                                  <div className="flex h-5 w-5 items-center justify-center rounded border border-emerald-500 bg-emerald-500">
-                                    <Check className="h-3 w-3 text-slate-900" />
-                                  </div>
-                                ) : (
-                                  <div className="h-5 w-5 rounded border border-slate-600/50 bg-slate-700/30" />
-                                )}
-                              </div>
-                              <div className="text-left flex-1">
-                                <p className={`text-sm font-medium ${subtask.isCompleted ? 'line-through' : 'text-white'}`}>
-                                  {subtask.title}
-                                </p>
-                                {subtask.aiAssistanceType && (
-                                  <p className="text-xs text-sky-400 mt-1">AI {subtask.aiAssistanceType}</p>
-                                )}
-                              </div>
-                            </motion.button>
-                          ))}
-                        </div>
-                      </>
+                    {expandedSteps.includes(step.stepNumber) && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="border-t border-border px-6 py-4 bg-muted/20"
+                      >
+                        {/* Step Content Rendering */}
+                        {step.stepNumber === 1 ? (
+                          <Step1BusinessBuilder
+                            launchName={launch?.name || ''}
+                            launchId={launch?.id || ''}
+                            onComplete={() => fetchLaunch()}
+                          />
+                        ) : step.stepNumber === 2 ? (
+                          <Step2BrandBuilder
+                            launchName={launch?.name || ''}
+                            launchId={launch?.id || ''}
+                            onComplete={() => fetchLaunch()}
+                          />
+                        ) : step.stepNumber === 3 ? (
+                          <Step3ServiceBuilder
+                            launchName={launch?.name || ''}
+                            launchId={launch?.id || ''}
+                            onComplete={() => fetchLaunch()}
+                          />
+                        ) : step.stepNumber === 4 ? (
+                          <Step4WebsiteBuilder
+                            launchName={launch?.name || ''}
+                            launchId={launch?.id || ''}
+                            onComplete={() => fetchLaunch()}
+                          />
+                        ) : step.stepNumber === 5 ? (
+                          <Step5LaunchStrategy
+                            launchName={launch?.name || ''}
+                            launchId={launch?.id || ''}
+                            onComplete={() => fetchLaunch()}
+                          />
+                        ) : null}
+                      </motion.div>
                     )}
                   </motion.div>
-                )}
-              </motion.div>
-            ))}
+                ))}
+              </div>
+            </motion.div>
           </div>
-        </motion.div>
+        )}
       </div>
-
-      {/* Business Assets Section */}
-      {launch?.assets && (
-        <BusinessAssets
-          launchId={String(params.id)}
-          assets={launch.assets}
-          onAssetUpdated={() => fetchAssets(String(params.id))}
-        />
-      )}
-
-      {/* Business Assistant Chat */}
-      {aiAssistantActive && (
-        <div className="mt-12">
-          <BusinessAssistant
-            launchId={String(params.id)}
-            businessFoundation={businessFoundation}
-          />
-        </div>
-      )}
 
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-lg border border-white/10 bg-[#0a1220] p-6 max-w-md w-full mx-4"
+            className="rounded-lg border border-border bg-card p-6 max-w-md mx-4"
           >
-            <h2 className="text-lg font-semibold text-white mb-2">Delete Launch?</h2>
-            <p className="text-slate-400 text-sm mb-6">
-              Are you sure you want to delete "{launch.name}"? This action cannot be undone and will delete all progress and data associated with this launch.
-            </p>
-            <div className="flex gap-3 justify-end">
+            <h3 className="text-lg font-semibold text-foreground mb-2">Delete Launch?</h3>
+            <p className="text-sm text-muted-foreground mb-6">This action cannot be undone.</p>
+            <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteDialog(false)}
-                disabled={deleting}
-                className="px-4 py-2 rounded-lg border border-white/10 text-white hover:bg-white/[0.05] transition disabled:opacity-50"
+                className="flex-1 px-4 py-2 text-sm font-medium rounded-lg border border-border hover:bg-muted transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteLaunch}
                 disabled={deleting}
-                className="px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
               >
-                {deleting ? (
-                  <>
-                    <span className="h-4 w-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </>
-                )}
+                {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </motion.div>
