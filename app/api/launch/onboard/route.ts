@@ -7,6 +7,7 @@ import { headers } from 'next/headers'
 export async function POST(req: Request) {
   try {
     console.log('[v0] Onboarding API called')
+    
     const session = await auth.api.getSession({ headers: await headers() })
     
     if (!session?.user) {
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
     const data = await req.json()
     console.log('[v0] Onboarding data received:', { businessName: data.businessName, businessType: data.businessType })
 
-    // Create business launch
+    // Create business launch - only insert columns that exist in the database
     const launchId = nanoid()
     console.log('[v0] Generated launchId:', launchId)
     
@@ -27,15 +28,28 @@ export async function POST(req: Request) {
         userId: session.user.id,
         name: data.businessName,
         description: data.description || '',
-        businessType: data.businessType,
+        businessType: data.businessType || '',
         industry: data.industry || '',
-        location: '',
+        location: data.location || '',
+        completedSteps: '[]',
         progress: 0,
+        status: 'draft',
+        isApproved: false,
+        approvedAt: null,
+        lastSavedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       console.log('[v0] Business launch created in database:', launchId)
     } catch (dbError) {
       console.error('[v0] Database error creating launch:', dbError)
-      return Response.json({ error: 'Failed to create launch in database', details: String(dbError) }, { status: 500 })
+      const errorMessage = dbError instanceof Error ? dbError.message : String(dbError)
+      console.error('[v0] Detailed error:', errorMessage)
+      
+      return Response.json({ 
+        error: 'Failed to create launch. Please try again.',
+        details: errorMessage 
+      }, { status: 500 })
     }
 
     // Create the 5 main steps with their subtasks
@@ -132,7 +146,11 @@ export async function POST(req: Request) {
     }
 
     console.log('[v0] Onboarding completed successfully, returning launchId:', launchId)
-    return Response.json({ launchId, id: launchId, success: true })
+    return Response.json({ 
+      success: true,
+      launchId,
+      message: 'Launch created successfully'
+    }, { status: 200 })
   } catch (error) {
     console.error('[v0] Onboarding API error:', error)
     return Response.json({ error: 'Failed to create launch', details: String(error) }, { status: 500 })

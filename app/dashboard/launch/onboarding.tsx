@@ -18,6 +18,7 @@ export function LaunchOnboarding() {
   const router = useRouter()
   const [step, setStep] = useState(1) // Maps to original step 3
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<OnboardingData>({
     businessName: 'My Business',
     businessType: 'other',
@@ -62,6 +63,7 @@ export function LaunchOnboarding() {
 
   const submitOnboarding = async () => {
     setLoading(true)
+    setError(null)
     try {
       console.log('[v0] Submitting onboarding data:', data)
       const response = await fetch('/api/launch/onboard', {
@@ -75,16 +77,22 @@ export function LaunchOnboarding() {
       if (response.ok) {
         const result = await response.json()
         console.log('[v0] Launch created successfully:', result)
-        console.log('[v0] Redirecting to:', `/dashboard/launch/${result.launchId}`)
-        router.push(`/dashboard/launch/${result.launchId}`)
+        if (result.launchId) {
+          console.log('[v0] Redirecting to:', `/dashboard/launch/${result.launchId}`)
+          router.push(`/dashboard/launch/${result.launchId}`)
+        } else {
+          console.error('[v0] No launchId in response:', result)
+          setError('Launch created but no ID returned. Please try again.')
+        }
       } else {
-        const errorText = await response.text()
-        console.error('[v0] Onboarding API error:', response.status, errorText)
-        alert(`Error: ${errorText || 'Failed to create launch'}`)
+        const errorData = await response.json()
+        console.error('[v0] Onboarding API error:', response.status, errorData)
+        const errorMessage = errorData.error || errorData.details || 'Failed to create launch'
+        setError(errorMessage)
       }
     } catch (error) {
       console.error('[v0] Onboarding submission error:', error)
-      alert('Error submitting form. Please try again.')
+      setError('Error submitting form. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -115,6 +123,17 @@ export function LaunchOnboarding() {
             transition={{ duration: 0.3 }}
           />
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400"
+          >
+            {error}
+          </motion.div>
+        )}
 
         {/* Form Content */}
         <motion.div

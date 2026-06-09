@@ -26,8 +26,11 @@ Return ONLY valid JSON with this exact structure (no markdown, no code blocks):
     "businessName": "Suggested business name",
     "recommendedDomain": "suggested-domain.com",
     "description": "1-2 sentence business description",
+    "industry": "The industry category (e.g., SaaS, Consulting, Ecommerce)",
+    "location": "Suggested location or 'Remote' if location-independent",
     "whatYouSell": "Products/services description",
     "whoYouServe": "Target customer description",
+    "problemSolved": "The specific problem this business solves",
     "revenueModel": "How the business generates revenue",
     "simplePricing": "Simple pricing structure (e.g., $29/month starter plan)",
     "businessPlanSummary": "2-3 sentence executive summary"

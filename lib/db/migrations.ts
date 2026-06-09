@@ -9,6 +9,96 @@ export async function runMigrations() {
   console.log('[v0] Starting database migrations...')
 
   try {
+    // Create domain table first if it doesn't exist (it's referenced by other tables)
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS domain (
+        id text PRIMARY KEY,
+        name text NOT NULL UNIQUE
+      )
+    `)
+    console.log('[v0] ✓ domain table exists/created')
+
+    // Create businessLaunch table if it doesn't exist
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "businessLaunch" (
+        id text PRIMARY KEY,
+        "userId" text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+        name text NOT NULL,
+        description text,
+        "businessType" text,
+        industry text,
+        location text,
+        "completedSteps" text DEFAULT '[]',
+        progress integer DEFAULT 0,
+        status text DEFAULT 'draft',
+        "isApproved" boolean DEFAULT false,
+        "approvedAt" timestamp,
+        "lastSavedAt" timestamp DEFAULT NOW(),
+        "createdAt" timestamp DEFAULT NOW(),
+        "updatedAt" timestamp DEFAULT NOW()
+      )
+    `)
+    console.log('[v0] ✓ businessLaunch table created/verified')
+
+    // Create launchStep table if it doesn't exist
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "launchStep" (
+        id text PRIMARY KEY,
+        "launchId" text NOT NULL REFERENCES "businessLaunch"(id) ON DELETE CASCADE,
+        "stepNumber" integer NOT NULL,
+        title text NOT NULL,
+        description text,
+        "isCompleted" boolean DEFAULT false,
+        "createdAt" timestamp DEFAULT NOW(),
+        "updatedAt" timestamp DEFAULT NOW()
+      )
+    `)
+    console.log('[v0] ✓ launchStep table created/verified')
+
+    // Create launchSubtask table if it doesn't exist
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "launchSubtask" (
+        id text PRIMARY KEY,
+        "stepId" text NOT NULL REFERENCES "launchStep"(id) ON DELETE CASCADE,
+        title text NOT NULL,
+        "order" integer,
+        "isCompleted" boolean DEFAULT false,
+        "aiAssistanceType" text,
+        "createdAt" timestamp DEFAULT NOW(),
+        "updatedAt" timestamp DEFAULT NOW()
+      )
+    `)
+    console.log('[v0] ✓ launchSubtask table created/verified')
+
+    // Create launchChat table if it doesn't exist
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "launchChat" (
+        id text PRIMARY KEY,
+        "launchId" text NOT NULL REFERENCES "businessLaunch"(id) ON DELETE CASCADE,
+        "stepId" text NOT NULL REFERENCES "launchStep"(id) ON DELETE CASCADE,
+        role text NOT NULL,
+        content text NOT NULL,
+        "createdAt" timestamp DEFAULT NOW()
+      )
+    `)
+    console.log('[v0] ✓ launchChat table created/verified')
+
+    // Create launchAsset table if it doesn't exist
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "launchAsset" (
+        id text PRIMARY KEY,
+        "launchId" text NOT NULL REFERENCES "businessLaunch"(id) ON DELETE CASCADE,
+        type text NOT NULL,
+        title text NOT NULL,
+        content text,
+        "isApproved" boolean DEFAULT false,
+        "approvedAt" timestamp,
+        "lastUpdatedAt" timestamp DEFAULT NOW(),
+        "createdAt" timestamp DEFAULT NOW()
+      )
+    `)
+    console.log('[v0] ✓ launchAsset table created/verified')
+
     // Create domainVerification table if it doesn't exist
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS "domainVerification" (
@@ -81,6 +171,11 @@ export async function runMigrations() {
       'CREATE INDEX IF NOT EXISTS idx_domain_verification_status ON domain("verificationStatus")',
       'CREATE INDEX IF NOT EXISTS idx_domain_verification_code ON "domainVerification"("verificationCode")',
       'CREATE INDEX IF NOT EXISTS idx_domain_availability_cache_expires ON "domainAvailabilityCache"("expiresAt")',
+      'CREATE INDEX IF NOT EXISTS idx_business_launch_user_id ON "businessLaunch"("userId")',
+      'CREATE INDEX IF NOT EXISTS idx_launch_step_launch_id ON "launchStep"("launchId")',
+      'CREATE INDEX IF NOT EXISTS idx_launch_subtask_step_id ON "launchSubtask"("stepId")',
+      'CREATE INDEX IF NOT EXISTS idx_launch_chat_launch_id ON "launchChat"("launchId")',
+      'CREATE INDEX IF NOT EXISTS idx_launch_asset_launch_id ON "launchAsset"("launchId")',
     ]
 
     for (const indexSQL of indexes) {
